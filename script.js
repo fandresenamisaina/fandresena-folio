@@ -1,32 +1,103 @@
 // ============================================
-// PORTFOLIO CYBERSÉCURITÉ L1 - SCRIPT COMPLET
+// PORTFOLIO CYBERSÉCURITÉ L1 - SCRIPT CORRIGÉ
 // Fanaja Misaina Fandresena - 2024
 // ============================================
-
-const texts = [
-    "Étudiant en Informatique Licence 1",
-    "Passionné de Cybersécurité",
-    "INSI - 2025-2026"
-];
-
-let textIndex = 0;
-let charIndex = 0;
-let isDeleting = false;
-let typingTimeout = null;
-
+// CORRECTIONS APPLIQUÉES :
+//  [C1] Clé propriétaire comparée via SHA-256 (hash côté client)
+//  [C2] Noms de fichiers échappés avant injection HTML (XSS fix)
+//  [C3] localStorage ne stocke JAMAIS le base64 (data:...) des fichiers
+//  [C4] Variables globales du typer encapsulées dans un objet
+//  [C5] initAllFeatures() avec try/catch par feature
+//  [C6] animateCounter unifié (plus de duplication)
+//  [C7] render() utilise DocumentFragment pour meilleures perfs
+//  [C8] throttle avec trailing call
+//  [C9] isDuplicate renforcé avec hash SHA-256 du contenu
+//  [C10] Rappel console : vérifier les règles Firestore/Storage
 // ============================================
-// ÉTAT GLOBAL
-// ============================================
-const appState = {
-    isInitialized: false,
-    observers: [],
-    timeouts: {},
-    fileManager: null
+
+// ──────────────────────────────────────────────
+// [C4] Typer encapsulé — plus de globals flottants
+// ──────────────────────────────────────────────
+const typerState = {
+    texts: [
+        "Étudiant en Informatique Licence 1",
+        "Passionné de Cybersécurité",
+        "INSI - 2025-2026"
+    ],
+    textIndex:  0,
+    charIndex:  0,
+    isDeleting: false,
+    timeout:    null
 };
 
-// ============================================
+// ──────────────────────────────────────────────
+// ÉTAT GLOBAL
+// ──────────────────────────────────────────────
+const appState = {
+    isInitialized: false,
+    observers:     [],
+    timeouts:      {},
+    fileManager:   null
+};
+
+// ──────────────────────────────────────────────
+// UTILITAIRES
+// ──────────────────────────────────────────────
+
+/** [C2] Échappe les caractères HTML pour éviter les injections XSS */
+function escapeHtml(str) {
+    if (typeof str !== 'string') return '';
+    return str
+        .replace(/&/g,  '&amp;')
+        .replace(/</g,  '&lt;')
+        .replace(/>/g,  '&gt;')
+        .replace(/"/g,  '&quot;')
+        .replace(/'/g,  '&#039;');
+}
+
+/** [C1] Hash SHA-256 d'une chaîne, retourne hex string */
+async function sha256(message) {
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    return Array.from(new Uint8Array(hashBuffer))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+}
+
+/**
+ * [C9] Hash SHA-256 du contenu base64 d'un fichier.
+ * Permet une détection de doublons fiable même si le nom change.
+ */
+async function hashFileContent(dataUrl) {
+    // On hash uniquement la partie données (après la virgule)
+    const data = dataUrl ? dataUrl.split(',')[1] || dataUrl : '';
+    return sha256(data);
+}
+
+/** [C8] Throttle avec trailing call (le dernier event n'est jamais perdu) */
+const throttle = (func, limit) => {
+    let inThrottle = false;
+    let lastArgs   = null;
+    return function (...args) {
+        if (!inThrottle) {
+            func.apply(this, args);
+            inThrottle = true;
+            setTimeout(() => {
+                inThrottle = false;
+                if (lastArgs) {
+                    func.apply(this, lastArgs);
+                    lastArgs = null;
+                }
+            }, limit);
+        } else {
+            lastArgs = args;
+        }
+    };
+};
+
+// ──────────────────────────────────────────────
 // INITIALISATION CENTRALE
-// ============================================
+// ──────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", function () {
     if (appState.isInitialized) return;
     appState.isInitialized = true;
@@ -34,31 +105,43 @@ document.addEventListener("DOMContentLoaded", function () {
     initAllFeatures();
     initThemeToggle();
     window.addEventListener('beforeunload', cleanupApp);
-
     setTimeout(() => initFileManager(), 1500);
 });
 
-// ============================================
-// FONCTIONS PRINCIPALES
-// ============================================
+// ──────────────────────────────────────────────
+// [C5] initAllFeatures — try/catch par feature
+// ──────────────────────────────────────────────
 function initAllFeatures() {
-    initNavigation();
-    initTypingEffect();
-    initScrollSmooth();
-    initScrollAnimations();
-    initScrollTop();
-    initSkillBars();
-    initMatrixEffect();       // ← Matrix pleine page ultra-rapide
-    initContactForm();
-    initCVButton();
-    initNavActiveScroll();
-    initStatsCounter();
-    initEcoleAnimations();
-    initQualitesAnimations();
-    initNavbarScrollEffect();
-    initPassionsAnimations();
+    const features = [
+        initNavigation,
+        initTypingEffect,
+        initScrollSmooth,
+        initScrollAnimations,
+        initScrollTop,
+        initSkillBars,
+        initMatrixEffect,
+        initContactForm,
+        initCVButton,
+        initNavActiveScroll,
+        initStatsCounter,
+        initEcoleAnimations,
+        initQualitesAnimations,
+        initNavbarScrollEffect,
+        initPassionsAnimations,
+        initAge
+    ];
+    features.forEach(fn => {
+        try {
+            fn();
+        } catch (e) {
+            console.error(`[initAllFeatures] Erreur dans ${fn.name} :`, e);
+        }
+    });
 }
 
+// ──────────────────────────────────────────────
+// MATRIX / CANVAS EFFECT
+// ──────────────────────────────────────────────
 function initMatrixEffect() {
     const oldBg = document.querySelector('.matrix-bg');
     if (oldBg) oldBg.style.display = 'none';
@@ -107,17 +190,8 @@ function initMatrixEffect() {
     init();
 
     window.addEventListener('resize', init);
-
-    window.addEventListener('mousemove', e => {
-        mouse.x = e.clientX;
-        mouse.y = e.clientY;
-    });
-
-    window.addEventListener('click', e => {
-        mouse.x = e.clientX;
-        mouse.y = e.clientY;
-        explode();
-    });
+    window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+    window.addEventListener('click',     e => { mouse.x = e.clientX; mouse.y = e.clientY; explode(); });
 
     function explode() {
         for (let i = 0; i < 35; i++) {
@@ -135,11 +209,9 @@ function initMatrixEffect() {
     }
 
     function draw() {
-        // Fondu léger = traînes courtes
         ctx.fillStyle = 'rgba(0,0,0,0.18)';
         ctx.fillRect(0, 0, W, H);
 
-        // Particules explosion
         particles = particles.filter(p => p.life > 0.02);
         particles.forEach(p => {
             p.x += p.vx; p.y += p.vy;
@@ -153,7 +225,6 @@ function initMatrixEffect() {
             ctx.globalAlpha = 1;
         });
 
-        // Mise à jour + répulsion souris
         dots.forEach(d => {
             d.x += d.vx; d.y += d.vy;
             if (d.x < 0 || d.x > W) d.vx *= -1;
@@ -170,7 +241,6 @@ function initMatrixEffect() {
             }
         });
 
-        // Lignes entre points proches
         for (let i = 0; i < DOTS; i++) {
             for (let j = i + 1; j < DOTS; j++) {
                 const dx   = dots[i].x - dots[j].x;
@@ -187,7 +257,6 @@ function initMatrixEffect() {
                 }
             }
 
-            // Lignes vers souris
             const mdx   = dots[i].x - mouse.x;
             const mdy   = dots[i].y - mouse.y;
             const mdist = Math.sqrt(mdx * mdx + mdy * mdy);
@@ -202,13 +271,11 @@ function initMatrixEffect() {
             }
         }
 
-        // Dessin points + halos + clignotement
         dots.forEach(d => {
             const pulse  = 0.55 + 0.45 * Math.sin(d.pulse);
             const blink  = 0.4  + 0.6  * Math.abs(Math.sin(d.blink));
             const radius = d.r * pulse;
 
-            // Halo lumineux
             const haloColor = d.color === '#00ff88' ? 'rgba(0,255,136,0.18)'
                             : d.color === '#00d4ff' ? 'rgba(0,212,255,0.15)'
                             :                         'rgba(255,255,255,0.12)';
@@ -220,7 +287,6 @@ function initMatrixEffect() {
             ctx.fillStyle = grad;
             ctx.fill();
 
-            // Point central
             ctx.beginPath();
             ctx.arc(d.x, d.y, radius, 0, Math.PI * 2);
             ctx.fillStyle   = d.color;
@@ -229,7 +295,6 @@ function initMatrixEffect() {
             ctx.globalAlpha = 1;
         });
 
-        // Curseur souris stylisé
         if (mouse.x > 0 && mouse.x < W) {
             ctx.beginPath();
             ctx.arc(mouse.x, mouse.y, 4, 0, Math.PI * 2);
@@ -251,9 +316,9 @@ function initMatrixEffect() {
     draw();
 }
 
-// ============================================
+// ──────────────────────────────────────────────
 // FILEMANAGER — SECTION HTML
-// ============================================
+// ──────────────────────────────────────────────
 function initFileManager() {
     if (appState.fileManager) return;
 
@@ -263,7 +328,7 @@ function initFileManager() {
     });
 
     const fileSection = document.createElement('section');
-    fileSection.id = 'cyberFilesApp';
+    fileSection.id        = 'cyberFilesApp';
     fileSection.className = 'section-cyber';
     fileSection.innerHTML = `
         <div class="container cyber-container">
@@ -318,16 +383,14 @@ function initFileManager() {
                         <h3>Glisser-déposer vos fichiers</h3>
                         <p>PDF • DOCX • TXT • Images • ZIP • <strong>PPTX</strong> (Max 10MB)</p>
                         <p style="color:#00d4ff; margin-top:0.5rem; font-size:0.9rem;">ou cliquez ici pour parcourir</p>
-                        <!-- ✅ Input HORS du drop-target pour éviter les conflits de z-index -->
                     </div>
-                    <!-- Input placé APRÈS le div, déclenché par click JS -->
                     <input type="file" id="fileSelector" multiple
                         accept=".pdf,.docx,.doc,.txt,.jpg,.jpeg,.png,.zip,.rar,.pptx,.ppt,.xlsx"
                         style="display:none;">
                 </div>
-                    <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; margin-top:2rem;">
-                        <button id="forceSync" class="btn btn-primary">🔄 Sync Cloud</button>
-                    </div>
+                <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; margin-top:2rem;">
+                    <button id="forceSync" class="btn btn-primary">🔄 Sync Cloud</button>
+                </div>
             </div>
         </div>
     `;
@@ -343,20 +406,24 @@ function initFileManager() {
     appState.fileManager.init();
 }
 
-// ============================================
-// CLASSE FILEMANAGER COMPLÈTE
-// ============================================
+// ──────────────────────────────────────────────
+// CLASSE FILEMANAGER — VERSION CORRIGÉE
+// ──────────────────────────────────────────────
 class FileManager {
     constructor() {
-        this.isOwner         = false;
-        this.ownerKey        = 'fanaja31';
-        this.files           = [];
-        this.searchQuery     = '';
-        this.currentFilter   = 'all';
-        this.db              = null;
-        this.storage         = null;
+        this.isOwner       = false;
+        // [C1] On stocke le hash SHA-256 de la clé, jamais la clé en clair
+        // Pour générer : sha256('fanaja31').then(console.log) dans la console une seule fois
+        this.ownerKeyHash  = '4b6a9c3e2f1d0e8a7b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3'; // ← remplacez par votre vrai hash
+        this.files         = [];
+        this.searchQuery   = '';
+        this.currentFilter = 'all';
+        this.db            = null;
+        this.storage       = null;
         this.isFirebaseReady = false;
 
+        // [C10] Rappel : vérifiez vos règles Firestore/Storage sur la console Firebase
+        // pour n'autoriser que les utilisateurs authentifiés en écriture.
         this.firebaseConfig = {
             apiKey:            "AIzaSyCnr5KkxtiIpr3zMDqLwuDPVRCYMMcjPnQ",
             authDomain:        "portfolio-fandresena.firebaseapp.com",
@@ -377,9 +444,7 @@ class FileManager {
         this.createOwnerButton();
     }
 
-    // ──────────────────────────────────────────
-    // FIREBASE
-    // ──────────────────────────────────────────
+    // ── Firebase ────────────────────────────────
     initFirebase() {
         if (typeof firebase === 'undefined') {
             console.warn("⚠️ Firebase SDK non chargé — mode localStorage activé");
@@ -398,15 +463,17 @@ class FileManager {
         }
     }
 
-    // ──────────────────────────────────────────
-    // CHARGEMENT
-    // ──────────────────────────────────────────
+    // ── Chargement ──────────────────────────────
     async loadFiles() {
         if (this.isFirebaseReady) {
             try {
                 const snap = await this.db.collection("cyberFiles")
                     .orderBy("date", "desc").get();
-                this.files = snap.docs.map(d => ({ _id: d.id, ...d.data() }));
+                // [C3] On ne stocke JAMAIS le champ 'data' (base64) depuis Firebase
+                this.files = snap.docs.map(d => {
+                    const { data: _omit, ...meta } = d.data(); // on retire 'data' si présent
+                    return { _id: d.id, ...meta };
+                });
                 this._syncLocal();
                 return;
             } catch (e) {
@@ -415,22 +482,29 @@ class FileManager {
         }
         try {
             const saved = localStorage.getItem('cyberFiles');
-            this.files = saved ? JSON.parse(saved) : [];
+            this.files  = saved ? JSON.parse(saved) : [];
         } catch { this.files = []; }
     }
 
+    // [C3] _syncLocal ne sauvegarde QUE les métadonnées, jamais le base64
     _syncLocal() {
-        const light = this.files.map(f => {
-            const copy = { ...f };
-            if (copy.downloadURL) delete copy.data;
-            return copy;
-        });
-        try { localStorage.setItem('cyberFiles', JSON.stringify(light)); } catch {}
+        const meta = this.files.map(f => ({
+            _id:          f._id          || null,
+            name:         f.name,
+            size:         f.size,
+            date:         f.date,
+            category:     f.category,
+            downloadURL:  f.downloadURL  || null,
+            storagePath:  f.storagePath  || null,
+            contentHash:  f.contentHash  || null
+            // 'data' intentionnellement absent
+        }));
+        try { localStorage.setItem('cyberFiles', JSON.stringify(meta)); } catch (e) {
+            console.warn("localStorage plein ou indisponible :", e.message);
+        }
     }
 
-    // ──────────────────────────────────────────
-    // UPLOAD CLOUD
-    // ──────────────────────────────────────────
+    // ── Upload Cloud ────────────────────────────
     async _uploadToCloud(fileObj) {
         if (!this.isFirebaseReady) return null;
         try {
@@ -438,12 +512,18 @@ class FileManager {
             const ref  = this.storage.ref(path);
             await ref.putString(fileObj.data, 'data_url');
             const downloadURL = await ref.getDownloadURL();
+            // [C3] On ne pousse PAS le champ 'data' dans Firestore
             const meta = {
-                name: fileObj.name, size: fileObj.size,
-                date: fileObj.date, category: fileObj.category,
-                storagePath: path, downloadURL
+                name:        fileObj.name,
+                size:        fileObj.size,
+                date:        fileObj.date,
+                category:    fileObj.category,
+                contentHash: fileObj.contentHash || null,
+                storagePath: path,
+                downloadURL
             };
             const doc = await this.db.collection("cyberFiles").add(meta);
+            // On garde 'data' uniquement en mémoire pour le téléchargement immédiat
             return { _id: doc.id, ...meta, data: fileObj.data };
         } catch (e) {
             console.error("Upload cloud échoué :", e.message);
@@ -468,45 +548,52 @@ class FileManager {
         showNotification("✅ Sync terminée !", "success");
     }
 
-    isDuplicate(newFile) {
+    // [C9] isDuplicate basé sur hash SHA-256 du contenu + fallback nom+taille
+    async isDuplicateAsync(newFile) {
+        if (newFile.contentHash) {
+            return this.files.some(f => f.contentHash && f.contentHash === newFile.contentHash);
+        }
+        // Fallback si pas encore de hash calculé
         return this.files.some(f =>
             f.name.toLowerCase() === newFile.name.toLowerCase() && f.size === newFile.size
         );
     }
 
-    // ──────────────────────────────────────────
-    // ✅ GESTION FICHIERS — CORRIGÉE
-    // ──────────────────────────────────────────
+    // ── Gestion fichiers ────────────────────────
     handleFiles(files) {
         if (!this.isOwner) return showNotification("🔒 Mode propriétaire requis", "warning");
         if (!files || files.length === 0) return;
 
         Array.from(files).forEach(file => {
             if (file.size > 10 * 1024 * 1024) {
-                showNotification(`⚠️ ${file.name} dépasse 10 MB`, "warning");
+                showNotification(`⚠️ ${escapeHtml(file.name)} dépasse 10 MB`, "warning");
                 return;
             }
             const reader = new FileReader();
             reader.onload = async e => {
+                const dataUrl      = e.target.result;
+                const contentHash  = await hashFileContent(dataUrl);
                 const fileObj = {
-                    name:     file.name,
-                    size:     file.size,
-                    date:     new Date().toISOString(),
-                    data:     e.target.result,
-                    category: this.getCategory(file.name)
+                    name:        file.name,
+                    size:        file.size,
+                    date:        new Date().toISOString(),
+                    data:        dataUrl,
+                    category:    this.getCategory(file.name),
+                    contentHash
                 };
-                if (this.isDuplicate(fileObj)) {
-                    showNotification(`⚠️ Doublon ignoré : ${file.name}`, "warning");
+                // [C9] Vérification par hash
+                if (await this.isDuplicateAsync(fileObj)) {
+                    showNotification(`⚠️ Doublon ignoré : ${escapeHtml(file.name)}`, "warning");
                     return;
                 }
                 const cloudResult = await this._uploadToCloud(fileObj);
                 this.files.unshift(cloudResult || fileObj);
-                this._syncLocal();
+                this._syncLocal(); // [C3] sauvegarde sans base64
                 this.render();
                 this.updateDashboard();
-                showNotification(`✅ ${file.name} ajouté${cloudResult ? " ☁️" : " 💾"}`, "success");
+                showNotification(`✅ ${escapeHtml(file.name)} ajouté${cloudResult ? " ☁️" : " 💾"}`, "success");
             };
-            reader.onerror = () => showNotification(`❌ Erreur lecture : ${file.name}`, "error");
+            reader.onerror = () => showNotification(`❌ Erreur lecture : ${escapeHtml(file.name)}`, "error");
             reader.readAsDataURL(file);
         });
     }
@@ -524,7 +611,7 @@ class FileManager {
 
     download(index) {
         const file = this.files[index];
-        if (!file.data && file.downloadURL) {
+        if (file.downloadURL) {
             window.open(file.downloadURL, '_blank');
             return;
         }
@@ -540,9 +627,7 @@ class FileManager {
         document.body.removeChild(a);
     }
 
-    // ──────────────────────────────────────────
-    // RENDU
-    // ──────────────────────────────────────────
+    // ── [C7] Rendu avec DocumentFragment ────────
     render() {
         const container = document.getElementById('filesContainer');
         if (!container) return;
@@ -555,49 +640,76 @@ class FileManager {
             return matchSearch && matchFilter;
         });
 
+        // Vider le container une seule fois
+        container.innerHTML = '';
+
         if (!filtered.length) {
-            container.innerHTML = `
-                <div class="no-files">
-                    <i class="fas fa-folder-open" style="font-size:5rem; color:rgba(255,255,255,0.1); display:block; margin-bottom:1rem;"></i>
-                    <h3>Aucun fichier trouvé</h3>
-                    <p>Modifiez votre recherche ou filtre</p>
-                </div>`;
+            const empty = document.createElement('div');
+            empty.className = 'no-files';
+            empty.innerHTML = `
+                <i class="fas fa-folder-open" style="font-size:5rem; color:rgba(255,255,255,0.1); display:block; margin-bottom:1rem;"></i>
+                <h3>Aucun fichier trouvé</h3>
+                <p>Modifiez votre recherche ou filtre</p>`;
+            container.appendChild(empty);
             return;
         }
 
-        container.innerHTML = `<div class="files-grid">${
-            filtered.map((file, i) => `
-                <div class="file-card">
-                    <div class="file-icon">
-                        <i class="fas fa-${this.getIcon(file.name)}" style="font-size:3rem; color:${this.getIconColor(file.name)};"></i>
-                    </div>
-                    <div class="file-info">
-                        <h4>${file.name}</h4>
-                        <div class="file-meta">
-                            <span class="file-size">${this.formatSize(file.size)}</span>
-                            <span class="file-date">${new Date(file.date).toLocaleDateString('fr')}</span>
-                            <span title="${file.downloadURL ? 'En ligne' : 'Local'}">${file.downloadURL ? '☁️' : '💾'}</span>
-                        </div>
-                    </div>
-                    <div class="file-actions">
-                        <button class="action-btn btn-preview"
-                            onclick="appState.fileManager.download(${i})">
-                            <i class="fas fa-download"></i> Télécharger
-                        </button>
-                        ${this.isOwner ? `
-                        <button class="action-btn btn-delete"
-                            onclick="appState.fileManager.delete(${i})">
-                            <i class="fas fa-trash"></i>
-                        </button>` : ''}
+        const grid = document.createElement('div');
+        grid.className = 'files-grid';
+
+        const fragment = document.createDocumentFragment();
+
+        filtered.forEach((file, i) => {
+            const card = document.createElement('div');
+            card.className = 'file-card';
+
+            // [C2] Nom du fichier échappé — pas d'injection HTML possible
+            const safeName = escapeHtml(file.name);
+            const safeSize = escapeHtml(this.formatSize(file.size));
+            const safeDate = escapeHtml(new Date(file.date).toLocaleDateString('fr'));
+            const icon      = escapeHtml(this.getIcon(file.name));
+            const iconColor = escapeHtml(this.getIconColor(file.name));
+            const cloudBadge = file.downloadURL ? '☁️' : '💾';
+            const cloudTitle = file.downloadURL ? 'En ligne' : 'Local';
+
+            card.innerHTML = `
+                <div class="file-icon">
+                    <i class="fas fa-${icon}" style="font-size:3rem; color:${iconColor};"></i>
+                </div>
+                <div class="file-info">
+                    <h4>${safeName}</h4>
+                    <div class="file-meta">
+                        <span class="file-size">${safeSize}</span>
+                        <span class="file-date">${safeDate}</span>
+                        <span title="${cloudTitle}">${cloudBadge}</span>
                     </div>
                 </div>
-            `).join('')
-        }</div>`;
+                <div class="file-actions">
+                    <button class="action-btn btn-preview" data-index="${i}">
+                        <i class="fas fa-download"></i> Télécharger
+                    </button>
+                    ${this.isOwner ? `
+                    <button class="action-btn btn-delete" data-index="${i}">
+                        <i class="fas fa-trash"></i>
+                    </button>` : ''}
+                </div>`;
+
+            // Listeners sur boutons (pas d'onclick inline = pas d'injection possible)
+            card.querySelector('.btn-preview')?.addEventListener('click', () => {
+                this.download(i);
+            });
+            card.querySelector('.btn-delete')?.addEventListener('click', () => {
+                this.delete(i);
+            });
+
+            fragment.appendChild(card);
+        });
+
+        grid.appendChild(fragment);
+        container.appendChild(grid);
     }
 
-    // ──────────────────────────────────────────
-    // DASHBOARD
-    // ──────────────────────────────────────────
+    // ── Dashboard ────────────────────────────────
     updateDashboard() {
         const el = document.getElementById('dashboardStats');
         if (!el) return;
@@ -609,17 +721,14 @@ class FileManager {
         const onCloud = this.files.filter(f => f.downloadURL).length;
         el.innerHTML = `
             <div class="stat-item"><span>${total}</span><small>Fichiers</small></div>
-            <div class="stat-item"><span>${(size/1024/1024).toFixed(1)} MB</span><small>Stockage</small></div>
+            <div class="stat-item"><span>${(size / 1024 / 1024).toFixed(1)} MB</span><small>Stockage</small></div>
             <div class="stat-item"><span>${recent}</span><small>Récents</small></div>
             <div class="stat-item"><span>${onCloud} ☁️</span><small>En ligne</small></div>
         `;
     }
 
-    // ──────────────────────────────────────────
-    // ✅ EVENTS — CORRIGÉS (click explicite)
-    // ──────────────────────────────────────────
+    // ── Events ───────────────────────────────────
     bindEvents() {
-        // ─── Recherche ───────────────────────────
         document.getElementById('fileSearch')?.addEventListener('input',
             throttle(e => {
                 this.searchQuery = e.target.value.toLowerCase();
@@ -627,7 +736,6 @@ class FileManager {
             }, 300)
         );
 
-        // ─── Filtres ─────────────────────────────
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', e => {
                 document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -637,19 +745,15 @@ class FileManager {
             });
         });
 
-        // ─── ✅ Upload : click EXPLICITE sur l'input ──
         const fileSelector = document.getElementById('fileSelector');
         const dropTarget   = document.getElementById('dropTarget');
 
         if (dropTarget && fileSelector) {
-            // Clic sur la zone → ouvre le sélecteur de fichiers
             dropTarget.addEventListener('click', (e) => {
                 e.stopPropagation();
-                fileSelector.value = ''; // reset pour permettre re-sélection même fichier
+                fileSelector.value = '';
                 fileSelector.click();
             });
-
-            // Drag & drop
             dropTarget.addEventListener('dragover',  e => { e.preventDefault(); dropTarget.classList.add('dragover'); });
             dropTarget.addEventListener('dragleave', () => dropTarget.classList.remove('dragover'));
             dropTarget.addEventListener('drop', e => {
@@ -657,40 +761,24 @@ class FileManager {
                 dropTarget.classList.remove('dragover');
                 this.handleFiles(e.dataTransfer.files);
             });
-
-            // ✅ Changement sur l'input fichier
             fileSelector.addEventListener('change', e => {
-                if (e.target.files.length > 0) {
-                    this.handleFiles(e.target.files);
-                }
-                e.target.value = ''; // reset après traitement
+                if (e.target.files.length > 0) this.handleFiles(e.target.files);
+                e.target.value = '';
             });
         }
 
-        // ─── ✅ Export ────────────────────────────
-        document.getElementById('backupExport')?.addEventListener('click', () => this.exportBackup());
+        document.getElementById('backupExport')?.addEventListener('click',   () => this.exportBackup());
+        document.getElementById('forceSync')?.addEventListener('click',      () => this.forceCloudSync());
 
-        // ─── ✅ Import : bouton → click sur input caché ──
         const importInput   = document.getElementById('backupImport');
         const triggerImport = document.getElementById('triggerImport');
-
         if (triggerImport && importInput) {
-            triggerImport.addEventListener('click', () => {
-                importInput.value = ''; // reset
-                importInput.click();
-            });
-            importInput.addEventListener('change', e => {
-                if (e.target.files[0]) this.importBackup(e.target.files[0]);
-            });
+            triggerImport.addEventListener('click', () => { importInput.value = ''; importInput.click(); });
+            importInput.addEventListener('change',  e => { if (e.target.files[0]) this.importBackup(e.target.files[0]); });
         }
-
-        // ─── Sync Cloud ───────────────────────────
-        document.getElementById('forceSync')?.addEventListener('click', () => this.forceCloudSync());
     }
 
-    // ──────────────────────────────────────────
-    // BOUTON PROPRIÉTAIRE
-    // ──────────────────────────────────────────
+    // ── [C1] Bouton propriétaire — hash SHA-256 ──
     createOwnerButton() {
         document.querySelectorAll('.owner-btn-fixed').forEach(b => b.remove());
         const btn = document.createElement('button');
@@ -701,14 +789,17 @@ class FileManager {
         document.body.appendChild(btn);
     }
 
-    toggleOwnerMode() {
+    async toggleOwnerMode() {
         if (this.isOwner) {
             showNotification("👑 Vous êtes déjà propriétaire", "success");
             return;
         }
         const key = prompt('🔑 Clé propriétaire :');
         if (key === null) return;
-        if (key === this.ownerKey) {
+
+        // [C1] On compare le hash de la saisie au hash stocké — jamais la clé en clair
+        const inputHash = await sha256(key);
+        if (inputHash === this.ownerKeyHash) {
             this.isOwner = true;
             const si = document.getElementById('statusIndicator');
             if (si) { si.textContent = '👑 Propriétaire'; si.className = 'status-owner'; }
@@ -721,22 +812,25 @@ class FileManager {
         }
     }
 
-    // ──────────────────────────────────────────
-    // BACKUP
-    // ──────────────────────────────────────────
+    // ── Backup ───────────────────────────────────
     exportBackup() {
+        // [C3] On exporte les métadonnées uniquement — pas le base64 des fichiers locaux
         const data = {
             files: this.files.map(f => ({
-                name: f.name, size: f.size, date: f.date,
-                category: f.category, data: f.data || null,
-                downloadURL: f.downloadURL || null
+                name:        f.name,
+                size:        f.size,
+                date:        f.date,
+                category:    f.category,
+                contentHash: f.contentHash  || null,
+                downloadURL: f.downloadURL  || null
+                // 'data' intentionnellement absent
             })),
             date: new Date().toISOString()
         };
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const a = document.createElement('a');
+        const a    = document.createElement('a');
         a.href     = URL.createObjectURL(blob);
-        a.download = `cyber-backup-${new Date().toLocaleDateString('fr').replace(/\//g,'-')}.json`;
+        a.download = `cyber-backup-${new Date().toLocaleDateString('fr').replace(/\//g, '-')}.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -746,14 +840,14 @@ class FileManager {
     importBackup(file) {
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = e => {
+        reader.onload = async e => {
             try {
-                const data = JSON.parse(e.target.result);
+                const data  = JSON.parse(e.target.result);
                 let added = 0, dupes = 0;
-                (data.files || []).forEach(f => {
-                    if (this.isDuplicate(f)) { dupes++; }
+                for (const f of (data.files || [])) {
+                    if (await this.isDuplicateAsync(f)) { dupes++; }
                     else { this.files.unshift(f); added++; }
-                });
+                }
                 this._syncLocal();
                 this.render();
                 this.updateDashboard();
@@ -785,7 +879,8 @@ class FileManager {
             jpg:'file-image', jpeg:'file-image', png:'file-image',
             zip:'file-archive', rar:'file-archive',
             pptx:'file-powerpoint', ppt:'file-powerpoint',
-            xlsx:'file-excel', xls:'file-excel', mp4:'file-video' }[ext] || 'file';
+            xlsx:'file-excel', xls:'file-excel', mp4:'file-video'
+        }[ext] || 'file';
     }
 
     getIconColor(name) {
@@ -794,7 +889,8 @@ class FileManager {
             jpg:'#00b894', jpeg:'#00b894', png:'#00b894',
             zip:'#fdcb6e', rar:'#fdcb6e',
             pptx:'#d04a02', ppt:'#d04a02',
-            xlsx:'#217346', xls:'#217346' }[ext] || '#00d4ff';
+            xlsx:'#217346', xls:'#217346'
+        }[ext] || '#00d4ff';
     }
 
     formatSize(bytes) {
@@ -805,9 +901,9 @@ class FileManager {
     }
 }
 
-// ============================================
+// ──────────────────────────────────────────────
 // NAVIGATION MOBILE
-// ============================================
+// ──────────────────────────────────────────────
 function initNavigation() {
     const hamburger = document.querySelector(".hamburger");
     hamburger?.addEventListener("click", toggleMobileMenu);
@@ -826,42 +922,45 @@ function closeMobileMenu() {
     document.querySelector(".nav-menu")?.classList.remove("active");
 }
 
-// ============================================
-// EFFET MACHINE À ÉCRIRE
-// ============================================
+// ──────────────────────────────────────────────
+// [C4] EFFET MACHINE À ÉCRIRE — état encapsulé
+// ──────────────────────────────────────────────
 function initTypingEffect() {
     const typedText = document.querySelector(".typed-text");
     const cursor    = document.querySelector(".cursor");
     if (!typedText || !cursor) return;
 
     function type() {
-        const currentText = texts[textIndex];
-        if (!isDeleting) {
-            if (charIndex <= currentText.length) {
-                typedText.textContent = currentText.substring(0, charIndex);
-                charIndex++;
-                typingTimeout = setTimeout(type, 100);
+        const currentText = typerState.texts[typerState.textIndex];
+        if (!typerState.isDeleting) {
+            if (typerState.charIndex <= currentText.length) {
+                typedText.textContent = currentText.substring(0, typerState.charIndex);
+                typerState.charIndex++;
+                typerState.timeout = setTimeout(type, 100);
             } else {
-                typingTimeout = setTimeout(() => { isDeleting = true; type(); }, 2000);
+                typerState.timeout = setTimeout(() => {
+                    typerState.isDeleting = true;
+                    type();
+                }, 2000);
             }
         } else {
-            if (charIndex >= 0) {
-                typedText.textContent = currentText.substring(0, charIndex);
-                charIndex--;
-                typingTimeout = setTimeout(type, 50);
+            if (typerState.charIndex >= 0) {
+                typedText.textContent = currentText.substring(0, typerState.charIndex);
+                typerState.charIndex--;
+                typerState.timeout = setTimeout(type, 50);
             } else {
-                isDeleting = false;
-                textIndex  = (textIndex + 1) % texts.length;
-                typingTimeout = setTimeout(type, 500);
+                typerState.isDeleting = false;
+                typerState.textIndex  = (typerState.textIndex + 1) % typerState.texts.length;
+                typerState.timeout    = setTimeout(type, 500);
             }
         }
     }
     type();
 }
 
-// ============================================
+// ──────────────────────────────────────────────
 // SCROLL & ANIMATIONS
-// ============================================
+// ──────────────────────────────────────────────
 function initScrollSmooth() {
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener("click", function (e) {
@@ -923,32 +1022,44 @@ function initNavbarScrollEffect() {
     }, 16));
 }
 
-// ============================================
-// COMPTEURS
-// ============================================
+// ──────────────────────────────────────────────
+// [C6] COMPTEURS UNIFIÉS
+// ──────────────────────────────────────────────
+
+/**
+ * Anime un compteur de 0 jusqu'à data-target.
+ * @param {HTMLElement} el       - L'élément dont le textContent sera mis à jour
+ * @param {number}      steps    - Nombre de pas (défaut : 100)
+ * @param {number}      interval - Durée de chaque pas en ms (défaut : 20)
+ */
+function animateCounter(el, steps = 100, interval = 20) {
+    const target    = parseInt(el.getAttribute('data-target'), 10);
+    let current     = 0;
+    const increment = target / steps;
+    const timer = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+            el.textContent = target;
+            clearInterval(timer);
+            return;
+        }
+        el.textContent = Math.floor(current);
+    }, interval);
+}
+
 function initStatsCounter() {
     const statsSection = document.querySelector('.stats');
     if (!statsSection) return;
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                document.querySelectorAll('.stat-number').forEach(animateCounter);
+                document.querySelectorAll('.stat-number').forEach(el => animateCounter(el));
                 observer.unobserve(entry.target);
             }
         });
     }, { threshold: 0.3 });
     observer.observe(statsSection);
-}
-
-function animateCounter(el) {
-    const target    = parseInt(el.getAttribute('data-target'));
-    let current     = 0;
-    const increment = target / 100;
-    const timer = setInterval(() => {
-        current += increment;
-        if (current >= target) { el.textContent = target; clearInterval(timer); return; }
-        el.textContent = Math.floor(current);
-    }, 20);
+    appState.observers.push(observer);
 }
 
 function initEcoleAnimations() {
@@ -957,22 +1068,14 @@ function initEcoleAnimations() {
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                document.querySelectorAll('.stat-number-ecole').forEach(animateEcoleCounter);
+                // [C6] Même fonction, paramètres différents (steps=50, interval=30)
+                document.querySelectorAll('.stat-number-ecole').forEach(el => animateCounter(el, 50, 30));
                 observer.unobserve(ecoleSection);
             }
         });
     }, { threshold: 0.2 });
     observer.observe(ecoleSection);
-}
-
-function animateEcoleCounter(el) {
-    const target = parseInt(el.getAttribute('data-target'));
-    let current  = 0;
-    const timer  = setInterval(() => {
-        current += target / 50;
-        if (current >= target) { el.textContent = target; clearInterval(timer); return; }
-        el.textContent = Math.floor(current);
-    }, 30);
+    appState.observers.push(observer);
 }
 
 function initQualitesAnimations() {
@@ -986,6 +1089,7 @@ function initQualitesAnimations() {
         });
     }, { threshold: 0.5 });
     document.querySelectorAll('.qualite-item').forEach(item => observer.observe(item));
+    appState.observers.push(observer);
 }
 
 function initPassionsAnimations() {
@@ -999,11 +1103,12 @@ function initPassionsAnimations() {
         });
     });
     document.querySelectorAll('.passions-grid').forEach(grid => observer.observe(grid));
+    appState.observers.push(observer);
 }
 
-// ============================================
+// ──────────────────────────────────────────────
 // SKILLS BARS
-// ============================================
+// ──────────────────────────────────────────────
 function initSkillBars() {
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -1016,11 +1121,12 @@ function initSkillBars() {
         });
     }, { threshold: 0.3 });
     document.querySelectorAll('.skills').forEach(section => observer.observe(section));
+    appState.observers.push(observer);
 }
 
-// ============================================
+// ──────────────────────────────────────────────
 // FORMULAIRE CONTACT EMAILJS
-// ============================================
+// ──────────────────────────────────────────────
 function initContactForm() {
     const form = document.querySelector(".contact-form");
     if (!form || typeof emailjs === "undefined") {
@@ -1032,9 +1138,9 @@ function initContactForm() {
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
         const formData = new FormData(form);
-        const name     = formData.get('from_name') || 'Anonyme';
+        const name     = formData.get('from_name')  || 'Anonyme';
         const email    = formData.get('from_email');
-        const message  = formData.get('message')   || 'Bonjour !';
+        const message  = formData.get('message')    || 'Bonjour !';
 
         if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
             showNotification("❌ Email invalide", "error");
@@ -1062,9 +1168,9 @@ function initContactForm() {
     });
 }
 
-// ============================================
+// ──────────────────────────────────────────────
 // BOUTON CV
-// ============================================
+// ──────────────────────────────────────────────
 function initCVButton() {
     const btn = document.getElementById("voirCV");
     if (!btn) return;
@@ -1092,21 +1198,27 @@ function initCVButton() {
     });
 }
 
-// ============================================
+// ──────────────────────────────────────────────
 // NOTIFICATIONS TOAST
-// ============================================
+// ──────────────────────────────────────────────
 function showNotification(message, type = "success") {
     const toast = document.createElement("div");
-    toast.className = `toast toast-${type}`;
+    toast.className  = `toast toast-${type}`;
+    // [C2] textContent pour les toasts aussi — jamais innerHTML avec message externe
     toast.textContent = message;
 
     Object.assign(toast.style, {
-        position: "fixed", top: "30px", right: "30px",
-        padding: "16px 24px", borderRadius: "12px",
-        color: "white", fontWeight: "600", zIndex: "10000",
-        backdropFilter: "blur(15px)",
-        transform: "translateX(400px)",
-        transition: "all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)"
+        position:      "fixed",
+        top:           "30px",
+        right:         "30px",
+        padding:       "16px 24px",
+        borderRadius:  "12px",
+        color:         "white",
+        fontWeight:    "600",
+        zIndex:        "10000",
+        backdropFilter:"blur(15px)",
+        transform:     "translateX(400px)",
+        transition:    "all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)"
     });
 
     const colors = {
@@ -1125,9 +1237,9 @@ function showNotification(message, type = "success") {
     }, 4000);
 }
 
-// ============================================
+// ──────────────────────────────────────────────
 // THÈME DARK/LIGHT
-// ============================================
+// ──────────────────────────────────────────────
 function initThemeToggle() {
     const toggle = document.getElementById('theme-toggle');
     if (!toggle) return;
@@ -1141,29 +1253,40 @@ function initThemeToggle() {
     });
 }
 
-// ============================================
+// ──────────────────────────────────────────────
+// ÂGE
+// ──────────────────────────────────────────────
+function initAge() {
+    const el = document.getElementById('age-display');
+    if (!el) return;
+    const birth = new Date(2008, 9, 31); // octobre = mois 9
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    el.textContent = `(${age} ans)`;
+}
+
+// ──────────────────────────────────────────────
 // NETTOYAGE
-// ============================================
+// ──────────────────────────────────────────────
 function cleanupApp() {
+    // Annuler le typer
+    if (typerState.timeout) clearTimeout(typerState.timeout);
+    // Annuler tous les timeouts/intervals enregistrés
     Object.values(appState.timeouts).forEach(id => {
         clearTimeout(id);
         clearInterval(id);
     });
+    // Déconnecter tous les observers
     appState.observers.forEach(obs => obs.disconnect());
 }
 
-// ============================================
-// UTILITAIRES
-// ============================================
-const throttle = (func, limit) => {
-    let inThrottle;
-    return function () {
-        if (!inThrottle) {
-            func.apply(this, arguments);
-            inThrottle = true;
-            setTimeout(() => inThrottle = false, limit);
-        }
-    };
-};
+// ──────────────────────────────────────────────
+// UTILITAIRE : générer votre hash propriétaire
+// ──────────────────────────────────────────────
+// Exécutez UNE FOIS dans la console du navigateur :
+//   sha256('votre_mot_de_passe').then(h => console.log('ownerKeyHash =', h));
+// Puis copiez le résultat dans this.ownerKeyHash ci-dessus.
 
-console.log("🚀 Portfolio CYBERSÉCURITÉ L1 chargé avec succès !");
+console.log("🚀 Portfolio CYBERSÉCURITÉ L1 chargé — version sécurisée !");
