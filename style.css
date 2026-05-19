@@ -2984,3 +2984,40 @@ section[data-aos].animate {
         padding: 2rem 1.5rem;
     }
 }
+body {
+    background: #000 !important;
+}
+
+section,
+.hero,
+.navbar,
+footer,
+.about,
+.skills,
+.contact,
+.ecole,
+.passions,
+.qualites,
+.section-cyber {
+    background: transparent !important;
+}
+
+.card,
+.skill-item,
+.contact-form,
+.cyber-container,
+.file-card,
+.about-card,
+.passion-card,
+.qualite-item,
+.ecole-card {
+    background: rgba(0, 0, 0, 0.60) !important;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(0, 255, 136, 0.12) !important;
+}
+
+.navbar {
+    background: rgba(0, 0, 0, 0.75) !important;
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(0, 255, 136, 0.15) !important;
+}
