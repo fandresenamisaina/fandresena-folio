@@ -414,7 +414,7 @@ class FileManager {
         this.isOwner       = false;
         // [C1] On stocke le hash SHA-256 de la clé, jamais la clé en clair
         // Pour générer : sha256('fanaja31').then(console.log) dans la console une seule fois
-        this.ownerKeyHash  = '4b6a9c3e2f1d0e8a7b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3'; // ← remplacez par votre vrai hash
+        this.ownerKeyHash = '0fa97cbc695ea93f3c89a07134589529c875ad10f246a961a9212aea9ef9635e';// ← remplacez par votre vrai hash
         this.files         = [];
         this.searchQuery   = '';
         this.currentFilter = 'all';
