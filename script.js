@@ -325,12 +325,9 @@ function initFileManager() {
                         accept=".pdf,.docx,.doc,.txt,.jpg,.jpeg,.png,.zip,.rar,.pptx,.ppt,.xlsx"
                         style="display:none;">
                 </div>
-                <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; margin-top:2rem;">
-                    <button id="backupExport" class="btn btn-secondary">💾 Exporter</button>
-                    <button id="triggerImport" class="btn btn-secondary">📁 Importer</button>
-                    <input type="file" id="backupImport" accept=".json" style="display:none;">
-                    <button id="forceSync" class="btn btn-primary">🔄 Sync Cloud</button>
-                </div>
+                    <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; margin-top:2rem;">
+                        <button id="forceSync" class="btn btn-primary">🔄 Sync Cloud</button>
+                    </div>
             </div>
         </div>
     `;
