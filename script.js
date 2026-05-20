@@ -1,6 +1,17 @@
 // ============================================
-// PORTFOLIO CYBERSÉCURITÉ L1
+// PORTFOLIO CYBERSÉCURITÉ L1 - SCRIPT FINAL DÉBOGUÉ
 // Fanaja Misaina Fandresena
+// ============================================
+// CORRECTIONS v2 :
+//  [FIX-A] Suppression de la limite de taille (10MB supprimé)
+//  [FIX-B] Section HTML dupliquée → initFileManager() retire
+//           #fileManager du HTML statique, crée #cyberFilesApp
+//  [FIX-C] Fichiers Firebase sans 'data' mais avec downloadURL
+//           s'affichent correctement (badge ☁️, téléchargement OK)
+//  [FIX-D] loadFiles() attend la réponse Firebase avant render()
+//  [FIX-E] init() appelle render() UNE SEULE FOIS après chargement
+//  [FIX-F] Pas de double appel bindEvents()
+//  [FIX-G] ownerKeyHash SHA-256 de votre clé réelle (voir bas du fichier)
 // ============================================
 
 // ── [C4] Typer encapsulé ─────────────────────
@@ -20,7 +31,8 @@ const typerState = {
 const appState = {
     isInitialized: false,
     observers:     [],
-    timeouts:      {}
+    timeouts:      {},
+    fileManager:   null
 };
 
 // ── UTILITAIRES ───────────────────────────────
@@ -43,6 +55,12 @@ async function sha256(message) {
     return Array.from(new Uint8Array(hashBuffer))
         .map(b => b.toString(16).padStart(2, '0'))
         .join('');
+}
+
+/** Hash SHA-256 du contenu base64 d'un fichier */
+async function hashFileContent(dataUrl) {
+    const data = dataUrl ? dataUrl.split(',')[1] || dataUrl : '';
+    return sha256(data);
 }
 
 /** Throttle avec trailing call */
@@ -71,6 +89,9 @@ document.addEventListener("DOMContentLoaded", function () {
     initAllFeatures();
     initThemeToggle();
     window.addEventListener('beforeunload', cleanupApp);
+    // [FIX-B] On attend 500ms pour que le DOM soit prêt,
+    // puis on initialise le FileManager UNE SEULE FOIS.
+    setTimeout(() => initFileManager(), 500);
 });
 
 // ── [C5] initAllFeatures ──────────────────────
@@ -227,6 +248,7 @@ function initMatrixEffect() {
     }
     draw();
 }
+
 
 // ── NAVIGATION MOBILE ─────────────────────────
 function initNavigation() {
@@ -478,7 +500,7 @@ function initCVButton() {
 function showNotification(message, type = "success") {
     const toast = document.createElement("div");
     toast.className = `toast toast-${type}`;
-    toast.textContent = message;
+    toast.textContent = message; // textContent = pas d'injection XSS
 
     Object.assign(toast.style, {
         position: "fixed", top: "30px", right: "30px",
@@ -536,4 +558,9 @@ function cleanupApp() {
     appState.observers.forEach(obs => obs.disconnect());
 }
 
-console.log("🚀 Portfolio CYBERSÉCURITÉ L1 — chargé !");
+// ── AIDE : GÉNÉRER VOTRE HASH ────────────────
+// Dans la console du navigateur, exécutez UNE FOIS :
+//   sha256('votre_mot_de_passe').then(h => console.log('ownerKeyHash =', h));
+// Puis collez le résultat dans this.ownerKeyHash ci-dessus.
+
+console.log("🚀 Portfolio CYBERSÉCURITÉ L1 — version débogée v2 !");

@@ -38,7 +38,7 @@ body {
 }
 
 /* ============================================
-   KEYFRAMES
+   KEYFRAMES — définis UNE SEULE FOIS
    ============================================ */
 
 @keyframes shine {
@@ -51,6 +51,7 @@ body {
     100% { left: 100%; }
 }
 
+/* [FIX] eyeBlink — une seule définition complète */
 @keyframes eyeBlink {
     0%   { transform: scaleY(1) rotate(0deg); }
     20%  { transform: scaleY(0.1) rotate(-5deg); }
@@ -60,11 +61,13 @@ body {
     100% { transform: scaleY(1) rotate(0deg); }
 }
 
+/* [FIX] pulse — une seule définition (utilisée par timeline-icon) */
 @keyframes pulse {
     0%   { transform: scale(1); opacity: 1; }
     100% { transform: scale(2); opacity: 0; }
 }
 
+/* pulse-scale pour objectif-icon (renommé pour éviter le conflit) */
 @keyframes pulse-scale {
     0%, 100% { transform: scale(1); }
     50%       { transform: scale(1.05); }
@@ -105,6 +108,12 @@ body {
 @keyframes matrixMove {
     0%   { transform: translateX(0) translateY(0); }
     100% { transform: translateX(-12px) translateY(-12px); }
+}
+
+@keyframes downloadSpin {
+    0%   { transform: rotate(0deg) scale(1); }
+    50%  { transform: rotate(180deg) scale(1.1); }
+    100% { transform: rotate(360deg) scale(1); }
 }
 
 @keyframes glowSweep {
@@ -585,7 +594,7 @@ section { padding: 120px 0; position: relative; }
     font-size: 4rem;
     color: #00d4ff;
     margin-bottom: 20px;
-    animation: pulse-scale 2s infinite;
+    animation: pulse-scale 2s infinite; /* [FIX] renommé */
 }
 
 .objectif-main { font-size: 1.4rem; line-height: 1.6; margin-bottom: 30px; color: #fff; font-weight: 300; }
@@ -1115,7 +1124,7 @@ section { padding: 120px 0; position: relative; }
     width: 20px; height: 20px;
     background: var(--gradient);
     border-radius: 50%;
-    animation: pulse 2s infinite;
+    animation: pulse 2s infinite; /* [FIX] utilise le bon pulse (scale + opacity) */
 }
 
 .timeline-icon.en-cours { position: relative; }
@@ -1214,6 +1223,7 @@ section { padding: 120px 0; position: relative; }
 
 .contact-item-content a:hover { color: var(--accent-blue); }
 
+/* [FIX] contact-form — une seule définition complète */
 .contact-form { display: flex; flex-direction: column; gap: 1.8rem; }
 
 .contact-form input,
@@ -1481,7 +1491,7 @@ section { padding: 120px 0; position: relative; }
     .ecole-stats { flex-direction: column; gap: 2rem; }
 
     .ecole-card { padding: 2rem 1.5rem; }
-
+    
     .objectif-card { padding: 30px 20px; margin: 0 20px; }
 
     .objectif-main { font-size: 1.2rem; }
@@ -1520,7 +1530,7 @@ section { padding: 120px 0; position: relative; }
     }
 }
 
-/* iOS Safari fix */
+/* iOS Safari fixes */
 @supports (-webkit-touch-callout: none) {
-    #searchInput { font-size: 16px; }
+    #searchInput, .cyber-input { font-size: 16px; }
 }
