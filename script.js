@@ -5,7 +5,8 @@
 // CORRECTIONS APPLIQUÉES :
 //  [C1] Clé propriétaire comparée via SHA-256 (hash côté client)
 //  [C2] Noms de fichiers échappés avant injection HTML (XSS fix)
-//  [C3] localStorage ne stocke JAMAIS le base64 (data:...) des fichiers
+//  [C3] localStorage conserve le base64 pour les fichiers locaux
+//       (sans URL Firebase), avec fallback si quota dépassé
 //  [C4] Variables globales du typer encapsulées dans un objet
 //  [C5] initAllFeatures() avec try/catch par feature
 //  [C6] animateCounter unifié (plus de duplication)
@@ -13,6 +14,11 @@
 //  [C8] throttle avec trailing call
 //  [C9] isDuplicate renforcé avec hash SHA-256 du contenu
 //  [C10] Rappel console : vérifier les règles Firestore/Storage
+//  [FIX1] _syncLocal() garde le data base64 pour les fichiers locaux
+//  [FIX2] loadFiles() fusionne Firebase + localStorage (ne perd plus
+//         les fichiers locaux quand Firebase est vide/échoue)
+//  [FIX3] render() utilise realIndex (indexOf) au lieu de l'index
+//         du tableau filtré → download/delete sur le bon fichier
 // ============================================
 
 // ──────────────────────────────────────────────
@@ -57,7 +63,7 @@ function escapeHtml(str) {
 
 /** [C1] Hash SHA-256 d'une chaîne, retourne hex string */
 async function sha256(message) {
-    const msgBuffer = new TextEncoder().encode(message);
+    const msgBuffer  = new TextEncoder().encode(message);
     const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
     return Array.from(new Uint8Array(hashBuffer))
         .map(b => b.toString(16).padStart(2, '0'))
@@ -69,7 +75,6 @@ async function sha256(message) {
  * Permet une détection de doublons fiable même si le nom change.
  */
 async function hashFileContent(dataUrl) {
-    // On hash uniquement la partie données (après la virgule)
     const data = dataUrl ? dataUrl.split(',')[1] || dataUrl : '';
     return sha256(data);
 }
@@ -413,8 +418,7 @@ class FileManager {
     constructor() {
         this.isOwner       = false;
         // [C1] On stocke le hash SHA-256 de la clé, jamais la clé en clair
-        // Pour générer : sha256('fanaja31').then(console.log) dans la console une seule fois
-        this.ownerKeyHash = '0fa97cbc695ea93f3c89a07134589529c875ad10f246a961a9212aea9ef9635e';// ← remplacez par votre vrai hash
+        this.ownerKeyHash  = '0fa97cbc695ea93f3c89a07134589529c875ad10f246a961a9212aea9ef9635e';
         this.files         = [];
         this.searchQuery   = '';
         this.currentFilter = 'all';
@@ -422,8 +426,7 @@ class FileManager {
         this.storage       = null;
         this.isFirebaseReady = false;
 
-        // [C10] Rappel : vérifiez vos règles Firestore/Storage sur la console Firebase
-        // pour n'autoriser que les utilisateurs authentifiés en écriture.
+        // [C10] Vérifiez vos règles Firestore/Storage sur la console Firebase
         this.firebaseConfig = {
             apiKey:            "AIzaSyCnr5KkxtiIpr3zMDqLwuDPVRCYMMcjPnQ",
             authDomain:        "portfolio-fandresena.firebaseapp.com",
@@ -463,44 +466,82 @@ class FileManager {
         }
     }
 
-    // ── Chargement ──────────────────────────────
+    // ── [FIX2] Chargement — fusion Firebase + localStorage ──
     async loadFiles() {
+        // Toujours charger localStorage d'abord (contient les fichiers
+        // locaux avec leur data base64 si présent)
+        let localFiles = [];
+        try {
+            const saved = localStorage.getItem('cyberFiles');
+            localFiles  = saved ? JSON.parse(saved) : [];
+        } catch { localFiles = []; }
+
         if (this.isFirebaseReady) {
             try {
                 const snap = await this.db.collection("cyberFiles")
                     .orderBy("date", "desc").get();
-                // [C3] On ne stocke JAMAIS le champ 'data' (base64) depuis Firebase
-                this.files = snap.docs.map(d => {
-                    const { data: _omit, ...meta } = d.data(); // on retire 'data' si présent
+
+                // [C3] On ne stocke JAMAIS le champ 'data' depuis Firebase
+                const firebaseFiles = snap.docs.map(d => {
+                    const { data: _omit, ...meta } = d.data();
                     return { _id: d.id, ...meta };
                 });
+
+                // [FIX2] Fusionner : fichiers Firebase + fichiers locaux
+                // non encore synchronisés (pas d'_id Firebase)
+                const fbIds     = new Set(firebaseFiles.map(f => f._id).filter(Boolean));
+                const localOnly = localFiles.filter(f => !f._id || !fbIds.has(f._id));
+
+                this.files = [...firebaseFiles, ...localOnly];
                 this._syncLocal();
                 return;
             } catch (e) {
-                console.warn("Firebase read error :", e.message);
+                console.warn("Firebase read error, fallback localStorage :", e.message);
             }
         }
-        try {
-            const saved = localStorage.getItem('cyberFiles');
-            this.files  = saved ? JSON.parse(saved) : [];
-        } catch { this.files = []; }
+
+        // Fallback complet : localStorage uniquement
+        this.files = localFiles;
     }
 
-    // [C3] _syncLocal ne sauvegarde QUE les métadonnées, jamais le base64
+    // ── [FIX1] _syncLocal — conserve le base64 pour les fichiers locaux ──
     _syncLocal() {
-        const meta = this.files.map(f => ({
-            _id:          f._id          || null,
-            name:         f.name,
-            size:         f.size,
-            date:         f.date,
-            category:     f.category,
-            downloadURL:  f.downloadURL  || null,
-            storagePath:  f.storagePath  || null,
-            contentHash:  f.contentHash  || null
-            // 'data' intentionnellement absent
-        }));
-        try { localStorage.setItem('cyberFiles', JSON.stringify(meta)); } catch (e) {
-            console.warn("localStorage plein ou indisponible :", e.message);
+        const toSave = this.files.map(f => {
+            const obj = {
+                _id:         f._id         || null,
+                name:        f.name,
+                size:        f.size,
+                date:        f.date,
+                category:    f.category,
+                downloadURL: f.downloadURL || null,
+                storagePath: f.storagePath || null,
+                contentHash: f.contentHash || null
+            };
+            // [FIX1] Pour les fichiers locaux sans URL Firebase,
+            // on garde le base64 afin qu'ils puissent s'afficher
+            // et être téléchargés même après rechargement de la page.
+            if (!f.downloadURL && f.data) {
+                obj.data = f.data;
+            }
+            return obj;
+        });
+
+        try {
+            localStorage.setItem('cyberFiles', JSON.stringify(toSave));
+        } catch (e) {
+            // localStorage saturé → on réessaie sans les données binaires
+            console.warn("localStorage plein, sauvegarde sans base64 :", e.message);
+            const metaOnly = this.files.map(f => ({
+                _id:         f._id         || null,
+                name:        f.name,
+                size:        f.size,
+                date:        f.date,
+                category:    f.category,
+                downloadURL: f.downloadURL || null,
+                storagePath: f.storagePath || null,
+                contentHash: f.contentHash || null
+            }));
+            try { localStorage.setItem('cyberFiles', JSON.stringify(metaOnly)); } catch {}
         }
     }
 
@@ -553,7 +594,6 @@ class FileManager {
         if (newFile.contentHash) {
             return this.files.some(f => f.contentHash && f.contentHash === newFile.contentHash);
         }
-        // Fallback si pas encore de hash calculé
         return this.files.some(f =>
             f.name.toLowerCase() === newFile.name.toLowerCase() && f.size === newFile.size
         );
@@ -571,8 +611,8 @@ class FileManager {
             }
             const reader = new FileReader();
             reader.onload = async e => {
-                const dataUrl      = e.target.result;
-                const contentHash  = await hashFileContent(dataUrl);
+                const dataUrl     = e.target.result;
+                const contentHash = await hashFileContent(dataUrl);
                 const fileObj = {
                     name:        file.name,
                     size:        file.size,
@@ -581,19 +621,25 @@ class FileManager {
                     category:    this.getCategory(file.name),
                     contentHash
                 };
-                // [C9] Vérification par hash
+                // [C9] Vérification par hash avant ajout
                 if (await this.isDuplicateAsync(fileObj)) {
                     showNotification(`⚠️ Doublon ignoré : ${escapeHtml(file.name)}`, "warning");
                     return;
                 }
                 const cloudResult = await this._uploadToCloud(fileObj);
+                // cloudResult contient le fichier avec downloadURL si Firebase OK,
+                // sinon on garde fileObj (avec data en mémoire ET dans localStorage)
                 this.files.unshift(cloudResult || fileObj);
-                this._syncLocal(); // [C3] sauvegarde sans base64
+                this._syncLocal(); // [FIX1] sauvegarde avec base64 pour les fichiers locaux
                 this.render();
                 this.updateDashboard();
-                showNotification(`✅ ${escapeHtml(file.name)} ajouté${cloudResult ? " ☁️" : " 💾"}`, "success");
+                showNotification(
+                    `✅ ${escapeHtml(file.name)} ajouté${cloudResult ? " ☁️" : " 💾"}`,
+                    "success"
+                );
             };
-            reader.onerror = () => showNotification(`❌ Erreur lecture : ${escapeHtml(file.name)}`, "error");
+            reader.onerror = () =>
+                showNotification(`❌ Erreur lecture : ${escapeHtml(file.name)}`, "error");
             reader.readAsDataURL(file);
         });
     }
@@ -601,6 +647,7 @@ class FileManager {
     async delete(index) {
         if (!confirm('Supprimer ce fichier définitivement ?')) return;
         const file = this.files[index];
+        if (!file) return;
         await this._deleteFromCloud(file);
         this.files.splice(index, 1);
         this._syncLocal();
@@ -611,12 +658,13 @@ class FileManager {
 
     download(index) {
         const file = this.files[index];
+        if (!file) return;
         if (file.downloadURL) {
             window.open(file.downloadURL, '_blank');
             return;
         }
         if (!file.data) {
-            showNotification("⚠️ Données indisponibles", "warning");
+            showNotification("⚠️ Données indisponibles — rechargez la page", "warning");
             return;
         }
         const a = document.createElement('a');
@@ -627,7 +675,7 @@ class FileManager {
         document.body.removeChild(a);
     }
 
-    // ── [C7] Rendu avec DocumentFragment ────────
+    // ── [C7] [FIX3] Rendu avec DocumentFragment + realIndex ────
     render() {
         const container = document.getElementById('filesContainer');
         if (!container) return;
@@ -640,7 +688,6 @@ class FileManager {
             return matchSearch && matchFilter;
         });
 
-        // Vider le container une seule fois
         container.innerHTML = '';
 
         if (!filtered.length) {
@@ -654,23 +701,28 @@ class FileManager {
             return;
         }
 
-        const grid = document.createElement('div');
+        const grid     = document.createElement('div');
         grid.className = 'files-grid';
 
         const fragment = document.createDocumentFragment();
 
-        filtered.forEach((file, i) => {
+        filtered.forEach(file => {
+            // [FIX3] Index réel dans this.files, pas dans filtered
+            const realIndex = this.files.indexOf(file);
+
             const card = document.createElement('div');
             card.className = 'file-card';
 
             // [C2] Nom du fichier échappé — pas d'injection HTML possible
-            const safeName = escapeHtml(file.name);
-            const safeSize = escapeHtml(this.formatSize(file.size));
-            const safeDate = escapeHtml(new Date(file.date).toLocaleDateString('fr'));
-            const icon      = escapeHtml(this.getIcon(file.name));
-            const iconColor = escapeHtml(this.getIconColor(file.name));
-            const cloudBadge = file.downloadURL ? '☁️' : '💾';
-            const cloudTitle = file.downloadURL ? 'En ligne' : 'Local';
+            const safeName   = escapeHtml(file.name);
+            const safeSize   = escapeHtml(this.formatSize(file.size));
+            const safeDate   = escapeHtml(new Date(file.date).toLocaleDateString('fr'));
+            const icon       = escapeHtml(this.getIcon(file.name));
+            const iconColor  = escapeHtml(this.getIconColor(file.name));
+            const cloudBadge = file.downloadURL ? '☁️' : (file.data ? '💾' : '⚠️');
+            const cloudTitle = file.downloadURL ? 'En ligne (Firebase)'
+                             : file.data        ? 'Local (stocké)'
+                             :                    'Données manquantes';
 
             card.innerHTML = `
                 <div class="file-icon">
@@ -685,21 +737,21 @@ class FileManager {
                     </div>
                 </div>
                 <div class="file-actions">
-                    <button class="action-btn btn-preview" data-index="${i}">
+                    <button class="action-btn btn-preview" data-index="${realIndex}">
                         <i class="fas fa-download"></i> Télécharger
                     </button>
                     ${this.isOwner ? `
-                    <button class="action-btn btn-delete" data-index="${i}">
+                    <button class="action-btn btn-delete" data-index="${realIndex}">
                         <i class="fas fa-trash"></i>
                     </button>` : ''}
                 </div>`;
 
-            // Listeners sur boutons (pas d'onclick inline = pas d'injection possible)
+            // Listeners directs — pas d'onclick inline (pas d'injection possible)
             card.querySelector('.btn-preview')?.addEventListener('click', () => {
-                this.download(i);
+                this.download(realIndex);
             });
             card.querySelector('.btn-delete')?.addEventListener('click', () => {
-                this.delete(i);
+                this.delete(realIndex);
             });
 
             fragment.appendChild(card);
@@ -749,13 +801,18 @@ class FileManager {
         const dropTarget   = document.getElementById('dropTarget');
 
         if (dropTarget && fileSelector) {
-            dropTarget.addEventListener('click', (e) => {
+            dropTarget.addEventListener('click', e => {
                 e.stopPropagation();
                 fileSelector.value = '';
                 fileSelector.click();
             });
-            dropTarget.addEventListener('dragover',  e => { e.preventDefault(); dropTarget.classList.add('dragover'); });
-            dropTarget.addEventListener('dragleave', () => dropTarget.classList.remove('dragover'));
+            dropTarget.addEventListener('dragover', e => {
+                e.preventDefault();
+                dropTarget.classList.add('dragover');
+            });
+            dropTarget.addEventListener('dragleave', () =>
+                dropTarget.classList.remove('dragover')
+            );
             dropTarget.addEventListener('drop', e => {
                 e.preventDefault();
                 dropTarget.classList.remove('dragover');
@@ -774,7 +831,9 @@ class FileManager {
         const triggerImport = document.getElementById('triggerImport');
         if (triggerImport && importInput) {
             triggerImport.addEventListener('click', () => { importInput.value = ''; importInput.click(); });
-            importInput.addEventListener('change',  e => { if (e.target.files[0]) this.importBackup(e.target.files[0]); });
+            importInput.addEventListener('change',  e => {
+                if (e.target.files[0]) this.importBackup(e.target.files[0]);
+            });
         }
     }
 
@@ -797,7 +856,7 @@ class FileManager {
         const key = prompt('🔑 Clé propriétaire :');
         if (key === null) return;
 
-        // [C1] On compare le hash de la saisie au hash stocké — jamais la clé en clair
+        // [C1] Comparaison par hash — jamais la clé en clair
         const inputHash = await sha256(key);
         if (inputHash === this.ownerKeyHash) {
             this.isOwner = true;
@@ -814,7 +873,7 @@ class FileManager {
 
     // ── Backup ───────────────────────────────────
     exportBackup() {
-        // [C3] On exporte les métadonnées uniquement — pas le base64 des fichiers locaux
+        // Export des métadonnées + data locale (sans base64 Firebase, inutile ici)
         const data = {
             files: this.files.map(f => ({
                 name:        f.name,
@@ -822,8 +881,9 @@ class FileManager {
                 date:        f.date,
                 category:    f.category,
                 contentHash: f.contentHash  || null,
-                downloadURL: f.downloadURL  || null
-                // 'data' intentionnellement absent
+                downloadURL: f.downloadURL  || null,
+                // On exporte le data local pour pouvoir le ré-importer
+                data:        f.downloadURL  ? null : (f.data || null)
             })),
             date: new Date().toISOString()
         };
@@ -842,7 +902,7 @@ class FileManager {
         const reader = new FileReader();
         reader.onload = async e => {
             try {
-                const data  = JSON.parse(e.target.result);
+                const data   = JSON.parse(e.target.result);
                 let added = 0, dupes = 0;
                 for (const f of (data.files || [])) {
                     if (await this.isDuplicateAsync(f)) { dupes++; }
@@ -860,6 +920,7 @@ class FileManager {
         reader.readAsText(file);
     }
 
+    // ── Catégories & icônes ──────────────────────
     getCategory(name) {
         const n = name.toLowerCase();
         if (n.endsWith('.pptx') || n.endsWith('.ppt') || n.includes('slides') || n.includes('cours'))
@@ -875,21 +936,23 @@ class FileManager {
 
     getIcon(name) {
         const ext = name.split('.').pop().toLowerCase();
-        return { pdf:'file-pdf', docx:'file-word', doc:'file-word', txt:'file-alt',
-            jpg:'file-image', jpeg:'file-image', png:'file-image',
-            zip:'file-archive', rar:'file-archive',
-            pptx:'file-powerpoint', ppt:'file-powerpoint',
-            xlsx:'file-excel', xls:'file-excel', mp4:'file-video'
+        return {
+            pdf: 'file-pdf', docx: 'file-word', doc: 'file-word', txt: 'file-alt',
+            jpg: 'file-image', jpeg: 'file-image', png: 'file-image',
+            zip: 'file-archive', rar: 'file-archive',
+            pptx: 'file-powerpoint', ppt: 'file-powerpoint',
+            xlsx: 'file-excel', xls: 'file-excel', mp4: 'file-video'
         }[ext] || 'file';
     }
 
     getIconColor(name) {
         const ext = name.split('.').pop().toLowerCase();
-        return { pdf:'#ff4444', docx:'#2b579a', doc:'#2b579a', txt:'#aaaaaa',
-            jpg:'#00b894', jpeg:'#00b894', png:'#00b894',
-            zip:'#fdcb6e', rar:'#fdcb6e',
-            pptx:'#d04a02', ppt:'#d04a02',
-            xlsx:'#217346', xls:'#217346'
+        return {
+            pdf: '#ff4444', docx: '#2b579a', doc: '#2b579a', txt: '#aaaaaa',
+            jpg: '#00b894', jpeg: '#00b894', png: '#00b894',
+            zip: '#fdcb6e', rar: '#fdcb6e',
+            pptx: '#d04a02', ppt: '#d04a02',
+            xlsx: '#217346', xls: '#217346'
         }[ext] || '#00d4ff';
     }
 
@@ -1025,13 +1088,6 @@ function initNavbarScrollEffect() {
 // ──────────────────────────────────────────────
 // [C6] COMPTEURS UNIFIÉS
 // ──────────────────────────────────────────────
-
-/**
- * Anime un compteur de 0 jusqu'à data-target.
- * @param {HTMLElement} el       - L'élément dont le textContent sera mis à jour
- * @param {number}      steps    - Nombre de pas (défaut : 100)
- * @param {number}      interval - Durée de chaque pas en ms (défaut : 20)
- */
 function animateCounter(el, steps = 100, interval = 20) {
     const target    = parseInt(el.getAttribute('data-target'), 10);
     let current     = 0;
@@ -1068,8 +1124,10 @@ function initEcoleAnimations() {
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                // [C6] Même fonction, paramètres différents (steps=50, interval=30)
-                document.querySelectorAll('.stat-number-ecole').forEach(el => animateCounter(el, 50, 30));
+                // [C6] Même fonction, paramètres différents
+                document.querySelectorAll('.stat-number-ecole').forEach(el =>
+                    animateCounter(el, 50, 30)
+                );
                 observer.unobserve(ecoleSection);
             }
         });
@@ -1138,9 +1196,9 @@ function initContactForm() {
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
         const formData = new FormData(form);
-        const name     = formData.get('from_name')  || 'Anonyme';
-        const email    = formData.get('from_email');
-        const message  = formData.get('message')    || 'Bonjour !';
+        const name    = formData.get('from_name')  || 'Anonyme';
+        const email   = formData.get('from_email');
+        const message = formData.get('message')    || 'Bonjour !';
 
         if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
             showNotification("❌ Email invalide", "error");
@@ -1180,8 +1238,8 @@ function initCVButton() {
         e.preventDefault();
         if (this.dataset.state === "download") {
             const link = document.createElement("a");
-            link.href      = "CV.pdf";
-            link.download  = "CV_Fanaja_Misaina.pdf";
+            link.href     = "CV.pdf";
+            link.download = "CV_Fanaja_Misaina.pdf";
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -1203,22 +1261,22 @@ function initCVButton() {
 // ──────────────────────────────────────────────
 function showNotification(message, type = "success") {
     const toast = document.createElement("div");
-    toast.className  = `toast toast-${type}`;
-    // [C2] textContent pour les toasts aussi — jamais innerHTML avec message externe
+    toast.className = `toast toast-${type}`;
+    // [C2] textContent pour les toasts — jamais innerHTML avec message externe
     toast.textContent = message;
 
     Object.assign(toast.style, {
-        position:      "fixed",
-        top:           "30px",
-        right:         "30px",
-        padding:       "16px 24px",
-        borderRadius:  "12px",
-        color:         "white",
-        fontWeight:    "600",
-        zIndex:        "10000",
-        backdropFilter:"blur(15px)",
-        transform:     "translateX(400px)",
-        transition:    "all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)"
+        position:       "fixed",
+        top:            "30px",
+        right:          "30px",
+        padding:        "16px 24px",
+        borderRadius:   "12px",
+        color:          "white",
+        fontWeight:     "600",
+        zIndex:         "10000",
+        backdropFilter: "blur(15px)",
+        transform:      "translateX(400px)",
+        transition:     "all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)"
     });
 
     const colors = {
@@ -1271,14 +1329,11 @@ function initAge() {
 // NETTOYAGE
 // ──────────────────────────────────────────────
 function cleanupApp() {
-    // Annuler le typer
     if (typerState.timeout) clearTimeout(typerState.timeout);
-    // Annuler tous les timeouts/intervals enregistrés
     Object.values(appState.timeouts).forEach(id => {
         clearTimeout(id);
         clearInterval(id);
     });
-    // Déconnecter tous les observers
     appState.observers.forEach(obs => obs.disconnect());
 }
 
