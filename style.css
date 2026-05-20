@@ -38,7 +38,7 @@ body {
 }
 
 /* ============================================
-   KEYFRAMES — définis UNE SEULE FOIS
+   KEYFRAMES
    ============================================ */
 
 @keyframes shine {
@@ -51,7 +51,6 @@ body {
     100% { left: 100%; }
 }
 
-/* [FIX] eyeBlink — une seule définition complète */
 @keyframes eyeBlink {
     0%   { transform: scaleY(1) rotate(0deg); }
     20%  { transform: scaleY(0.1) rotate(-5deg); }
@@ -61,13 +60,11 @@ body {
     100% { transform: scaleY(1) rotate(0deg); }
 }
 
-/* [FIX] pulse — une seule définition (utilisée par timeline-icon) */
 @keyframes pulse {
     0%   { transform: scale(1); opacity: 1; }
     100% { transform: scale(2); opacity: 0; }
 }
 
-/* pulse-scale pour objectif-icon (renommé pour éviter le conflit) */
 @keyframes pulse-scale {
     0%, 100% { transform: scale(1); }
     50%       { transform: scale(1.05); }
@@ -108,12 +105,6 @@ body {
 @keyframes matrixMove {
     0%   { transform: translateX(0) translateY(0); }
     100% { transform: translateX(-12px) translateY(-12px); }
-}
-
-@keyframes downloadSpin {
-    0%   { transform: rotate(0deg) scale(1); }
-    50%  { transform: rotate(180deg) scale(1.1); }
-    100% { transform: rotate(360deg) scale(1); }
 }
 
 @keyframes glowSweep {
@@ -594,7 +585,7 @@ section { padding: 120px 0; position: relative; }
     font-size: 4rem;
     color: #00d4ff;
     margin-bottom: 20px;
-    animation: pulse-scale 2s infinite; /* [FIX] renommé */
+    animation: pulse-scale 2s infinite;
 }
 
 .objectif-main { font-size: 1.4rem; line-height: 1.6; margin-bottom: 30px; color: #fff; font-weight: 300; }
@@ -997,284 +988,6 @@ section { padding: 120px 0; position: relative; }
 .skill-level { color: var(--text-muted); font-size: 0.85rem; display: block; margin-top: 0.8rem; }
 
 /* ============================================
-   FILEMANAGER
-   ============================================ */
-.section-cyber {
-    padding: 120px 0;
-    position: relative;
-    overflow: hidden;
-}
-
-.section-cyber::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: var(--gradient);
-    box-shadow: 0 0 20px rgba(0,212,255,0.5);
-}
-
-.cyber-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 0 2rem;
-    position: relative;
-    z-index: 2;
-}
-
-.cyber-title {
-    font-family: 'Orbitron', monospace;
-    font-size: clamp(2.5rem, 6vw, 3.8rem);
-    text-align: center;
-    margin-bottom: 1rem;
-    background: var(--gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-weight: 800;
-}
-
-.cyber-subtitle {
-    text-align: center;
-    font-size: 1.3rem;
-    color: var(--text-muted);
-    margin-bottom: 4rem;
-    max-width: 800px;
-    margin-left: auto; margin-right: auto;
-    line-height: 1.6;
-}
-
-.cyber-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2.5rem;
-    padding: 1.5rem 0;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-
-.status-display { font-size: 0.95rem; padding: 8px 16px; border-radius: 25px; font-weight: 600; }
-
-.status-consultant {
-    background: rgba(0,212,255,0.2);
-    color: var(--accent-blue);
-    border: 1px solid rgba(0,212,255,0.3);
-}
-
-.status-owner {
-    background: rgba(0,255,136,0.2);
-    color: var(--accent-green);
-    border: 1px solid rgba(0,255,136,0.3);
-    animation: pulseOwner 2s infinite;
-}
-
-/* [FIX] dashboard-stats — nom de classe unique pour éviter conflit avec .stat-item des stats counter */
-.dashboard-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 2rem;
-    margin-bottom: 3rem;
-}
-
-.dashboard-stats .stat-item {
-    background: rgba(255,255,255,0.05);
-    padding: 2rem 1.5rem;
-    border-radius: 20px;
-    text-align: center;
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(255,255,255,0.1);
-    transition: var(--transition-normal);
-}
-
-.dashboard-stats .stat-item:hover {
-    transform: translateY(-8px);
-    box-shadow: var(--shadow-lg);
-    border-color: var(--accent-blue);
-}
-
-.dashboard-stats .stat-item span {
-    font-family: 'Orbitron', monospace;
-    font-size: 2.5rem;
-    font-weight: 800;
-    background: var(--gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    display: block;
-    margin-bottom: 0.5rem;
-}
-
-.dashboard-stats .stat-item small { color: var(--text-muted); font-size: 0.9rem; font-weight: 500; }
-
-/* [FIX] controls-panel — une seule définition */
-.controls-panel {
-    display: flex;
-    gap: 1.5rem;
-    align-items: center;
-    margin-bottom: 3rem;
-    flex-wrap: wrap;
-}
-
-#fileSearch {
-    flex: 1;
-    min-width: 300px;
-    padding: 16px 20px 16px 50px;
-    background: rgba(255,255,255,0.05);
-    border: 2px solid rgba(255,255,255,0.1);
-    border-radius: 15px;
-    color: var(--text-light);
-    font-size: 1rem;
-    backdrop-filter: blur(15px);
-    transition: var(--transition-normal);
-}
-
-#fileSearch::placeholder { color: var(--text-muted); }
-
-#fileSearch:focus {
-    outline: none;
-    border-color: var(--accent-blue);
-    box-shadow: 0 0 0 4px rgba(0,212,255,0.2);
-    background: rgba(255,255,255,0.08);
-}
-
-/* [FIX] filter-buttons + filter-btn — une seule définition */
-.filter-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
-
-.filter-btn {
-    padding: 14px 20px;
-    background: rgba(255,255,255,0.08);
-    border: 2px solid rgba(255,255,255,0.1);
-    border-radius: 12px;
-    color: var(--text-light);
-    font-weight: 600;
-    cursor: pointer;
-    transition: var(--transition-normal);
-    font-size: 0.95rem;
-    backdrop-filter: blur(10px);
-}
-
-.filter-btn.active,
-.filter-btn:hover {
-    background: var(--gradient);
-    color: var(--primary-dark);
-    border-color: var(--accent-blue);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-}
-
-.files-container { min-height: 400px; }
-
-/* [FIX] files-grid — une seule définition */
-.files-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: 2.5rem;
-}
-
-.file-card {
-    background: rgba(255,255,255,0.05);
-    border-radius: 20px;
-    padding: 2.5rem 2rem;
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.1);
-    transition: var(--transition-normal);
-    position: relative;
-    overflow: hidden;
-    cursor: pointer;
-    min-height: 200px;
-    display: flex;
-    flex-direction: column;
-}
-
-.file-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 4px;
-    background: var(--gradient);
-    transform: scaleX(0);
-    transition: transform 0.4s ease;
-}
-
-.file-card:hover::before { transform: scaleX(1); }
-
-.file-card:hover {
-    transform: translateY(-12px);
-    box-shadow: var(--shadow-lg);
-    border-color: rgba(0,212,255,0.3);
-}
-
-.file-icon { font-size: 3.5rem; margin-bottom: 1.5rem; text-align: center; opacity: 0.9; transition: var(--transition-normal); }
-
-.file-card:hover .file-icon { transform: scale(1.1); opacity: 1; }
-
-.file-info h4 { font-size: 1.3rem; margin-bottom: 0.8rem; color: var(--text-light); font-weight: 600; }
-
-.file-meta { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; }
-
-.file-size { background: rgba(0,212,255,0.2); color: var(--accent-blue); padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; }
-
-.file-date { background: rgba(0,255,136,0.2); color: var(--accent-green); padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; }
-
-.file-actions { margin-top: auto; display: flex; gap: 10px; flex-wrap: wrap; }
-
-.action-btn {
-    flex: 1;
-    min-width: 44px;
-    padding: 10px 16px;
-    border: none;
-    border-radius: 10px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: var(--transition-fast);
-    display: flex; align-items: center; justify-content: center; gap: 6px;
-}
-
-.btn-preview { background: rgba(0,212,255,0.2); color: var(--accent-blue); border: 1px solid rgba(0,212,255,0.3); }
-
-.btn-preview:hover { background: var(--accent-blue); color: var(--primary-dark); transform: translateY(-2px); }
-
-.btn-delete { background: rgba(255,107,107,0.2); color: #ff6b6b; border: 1px solid rgba(255,107,107,0.3); }
-
-.btn-delete:hover { background: #ff6b6b; color: white; transform: translateY(-2px); }
-
-#ownerPanel {
-    margin-top: 4rem;
-    padding: 3rem 2rem;
-    background: rgba(0,255,136,0.05);
-    border: 2px solid rgba(0,255,136,0.2);
-    border-radius: 25px;
-    backdrop-filter: blur(20px);
-}
-
-.upload-area { margin: 2.5rem 0; }
-
-.drop-target {
-    border: 3px dashed rgba(0,255,136,0.5);
-    border-radius: 20px;
-    padding: 4rem 2rem;
-    text-align: center;
-    background: rgba(0,255,136,0.05);
-    transition: all 0.3s ease;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-}
-
-.drop-target:hover,
-.drop-target.dragover {
-    border-color: var(--accent-green);
-    background: rgba(0,255,136,0.1);
-    transform: translateY(-5px);
-    box-shadow: 0 20px 40px rgba(0,255,136,0.2);
-}
-
-.no-files { text-align: center; padding: 6rem 2rem; color: var(--text-muted); }
-
-.no-files i { font-size: 6rem; color: rgba(255,255,255,0.1); margin-bottom: 2rem; display: block; }
-
-/* ============================================
    PROJECTS
    ============================================ */
 .projects { background: rgba(26,26,26,0.5); }
@@ -1402,7 +1115,7 @@ section { padding: 120px 0; position: relative; }
     width: 20px; height: 20px;
     background: var(--gradient);
     border-radius: 50%;
-    animation: pulse 2s infinite; /* [FIX] utilise le bon pulse (scale + opacity) */
+    animation: pulse 2s infinite;
 }
 
 .timeline-icon.en-cours { position: relative; }
@@ -1501,7 +1214,6 @@ section { padding: 120px 0; position: relative; }
 
 .contact-item-content a:hover { color: var(--accent-blue); }
 
-/* [FIX] contact-form — une seule définition complète */
 .contact-form { display: flex; flex-direction: column; gap: 1.8rem; }
 
 .contact-form input,
@@ -1770,22 +1482,6 @@ section { padding: 120px 0; position: relative; }
 
     .ecole-card { padding: 2rem 1.5rem; }
 
-    .files-grid { grid-template-columns: 1fr !important; gap: 2rem !important; }
-
-    .controls-panel { flex-direction: column; align-items: stretch; gap: 1.5rem; }
-
-    #fileSearch { min-width: auto; }
-
-    .filter-buttons { justify-content: center; }
-
-    .filter-btn { padding: 14px 16px !important; font-size: 0.9rem !important; }
-
-    .file-card { padding: 20px !important; }
-
-    .action-btn { flex: 1 1 48%; }
-
-    .section-cyber { padding: 60px 0 40px; }
-
     .objectif-card { padding: 30px 20px; margin: 0 20px; }
 
     .objectif-main { font-size: 1.2rem; }
@@ -1810,15 +1506,8 @@ section { padding: 120px 0; position: relative; }
     .hero-title { font-size: 2rem; }
     .typing-text { font-size: 1.1rem; }
     .passions-content { padding: 0 1.5rem; }
-    .cyber-title { font-size: 1.9rem !important; }
-    .file-card { padding: 18px 16px !important; }
     .toast { right: 20px; left: 20px; max-width: none; font-size: 0.9rem; }
     .timeline-badge { width: 26px; height: 26px; font-size: 0.65rem; }
-}
-
-@media (max-width: 375px) {
-    .section-cyber { padding: 50px 0 30px !important; }
-    .auth-panel { padding: 25px 15px !important; margin: 0 10px 30px !important; }
 }
 
 /* Performance */
@@ -1831,7 +1520,7 @@ section { padding: 120px 0; position: relative; }
     }
 }
 
-/* iOS Safari fixes */
+/* iOS Safari fix */
 @supports (-webkit-touch-callout: none) {
-    #searchInput, .cyber-input { font-size: 16px; }
+    #searchInput { font-size: 16px; }
 }

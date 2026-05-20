@@ -164,7 +164,7 @@
     </div>
 </section>
 
-<!-- ✅ FIX : Section PASSIONS & QUALITÉS — doublon supprimé, balises correctement fermées -->
+<!-- Section PASSIONS & QUALITÉS -->
 <section id="passions" class="passions">
     <div class="container">
         <h2 class="section-title">Mes Passions & Qualités</h2>
@@ -239,7 +239,6 @@
                     </div>
                 </div>
             </div>
-            <!-- ✅ FIX : fermeture de passions-content -->
         </div>
     </div>
 </section>
@@ -344,93 +343,6 @@
                 <h3>Design</h3>
                 <div class="skill-bar"><div class="skill-progress" data-width="45%"></div></div>
                 <small class="skill-level">Figma / Photoshop</small>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- ✅ FIX : Section fileManager — conservée pour compatibilité avec script.js (initFileManager() la remplace au runtime) -->
-<section id="fileManager" class="section-cyber dark-section">
-    <div class="container">
-        <div class="section-header cyber-glow">
-            <h2 class="section-title cyber-title">
-                <i class="fas fa-folder-open cyber-icon"></i> MES LEÇONS
-            </h2>
-            <p class="section-subtitle cyber-subtitle">
-                Stockage sécurisé • Organisation intelligente • Accès consultants restreint
-            </p>
-        </div>
-
-        <!-- MODE PROPRIÉTAIRE / CONSULTANT -->
-        <div id="authPanel" class="auth-panel">
-            <div class="auth-content">
-                <h3 id="authTitle">🔐 Mode Propriétaire</h3>
-                <p>Clé de vérification pour gérer vos fichiers</p>
-                <input type="password" id="ownerKey" placeholder="Votre clé secrète..." class="cyber-input">
-                <button id="verifyOwner" class="cyber-btn primary">
-                    <i class="fas fa-shield-alt"></i> Vérifier & Activer
-                </button>
-                <div class="consultant-notice">
-                    <p><strong>👥 Consultants :</strong> Visualisez et téléchargez uniquement</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- TABLEAU DE BORD -->
-        <div id="dashboard" class="dashboard hidden">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-file"></i></div>
-                    <div class="stat-value" id="totalFiles">0</div>
-                    <div class="stat-label">Fichiers</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-hdd"></i></div>
-                    <div class="stat-value" id="usedSpace">0 MB</div>
-                    <div class="stat-label">Espace</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-clock"></i></div>
-                    <div class="stat-value" id="recentCount">0</div>
-                    <div class="stat-label">Récents</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- UPLOAD ZONE -->
-        <div id="uploadZone" class="upload-zone hidden">
-            <div class="drop-zone" id="dropZone">
-                <i class="fas fa-cloud-upload-alt drop-icon"></i>
-                <p>Glissez-déposez vos fichiers ici</p>
-                <p>ou <label for="fileInput" class="file-label">cliquez pour parcourir</label></p>
-                <input type="file" id="fileInput" multiple accept=".pdf,.docx,.txt,.jpg,.jpeg,.png,.zip" hidden>
-                <div class="progress-bar" id="progressBar" style="display:none;">
-                    <div class="progress-fill" id="progressFill"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- FILTRES & RECHERCHE -->
-        <div class="controls-panel hidden" id="controlsPanel">
-            <div class="search-container">
-                <i class="fas fa-search search-icon"></i>
-                <input type="text" id="searchInput" placeholder="Rechercher un fichier...">
-            </div>
-            <div class="filters">
-                <button class="filter-btn active" data-filter="all">Tous</button>
-                <button class="filter-btn" data-filter="reseau">Réseau Local Entreprise / CCNA</button>
-                <button class="filter-btn" data-filter="linux">Linux</button>
-                <button class="filter-btn" data-filter="cyber">Introduction Cybersécurité</button>
-                <button class="filter-btn" data-filter="prog">Programmation</button>
-            </div>
-        </div>
-
-        <!-- LISTE DES FICHIERS -->
-        <div class="files-grid" id="filesGrid">
-            <div class="empty-state">
-                <i class="fas fa-folder-open empty-icon"></i>
-                <h3>Aucun fichier</h3>
-                <p>Commencez par uploader vos leçons</p>
             </div>
         </div>
     </div>
@@ -568,9 +480,6 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 <script src="script.js"></script>
 
 </body>
