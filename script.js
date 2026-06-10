@@ -466,7 +466,7 @@ function initCVButton() {
     btn.addEventListener("click", function (e) {
         e.preventDefault();
         if (this.dataset.state === "download") {
-            const link = Object.assign(document.createElement("a"), { href: "Fandresena_CV.pdf", download: "CV_Fanaja_Misaina.pdf" });
+            const link = Object.assign(document.createElement("a"), { href: "FandresenaCV.pdf", download: "CV_Fanaja_Misaina.pdf" });
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
             showNotification("✅ CV téléchargé !", "success");
         } else {
