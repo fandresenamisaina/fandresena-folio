@@ -473,7 +473,7 @@ function initCVButton() {
             const eye = this.querySelector(".eye-icon");
             if (eye) eye.style.animation = "eyeBlink 0.6s";
             setTimeout(() => {
-                window.open("CV.pdf", "CVPreview", "width=900,height=700");
+                window.open("FandresenaCV.pdf", "CVPreview", "width=900,height=700");
                 this.innerHTML = '<i class="fas fa-download"></i> Télécharger CV';
                 this.dataset.state = "download";
             }, 400);
