@@ -1,18 +1,3 @@
-// ============================================
-// PORTFOLIO CYBERSÉCURITÉ L1 - SCRIPT FINAL DÉBOGUÉ
-// Fanaja Misaina Fandresena
-// ============================================
-// CORRECTIONS v2 :
-//  [FIX-A] Suppression de la limite de taille (10MB supprimé)
-//  [FIX-B] Section HTML dupliquée → initFileManager() retire
-//           #fileManager du HTML statique, crée #cyberFilesApp
-//  [FIX-C] Fichiers Firebase sans 'data' mais avec downloadURL
-//           s'affichent correctement (badge ☁️, téléchargement OK)
-//  [FIX-D] loadFiles() attend la réponse Firebase avant render()
-//  [FIX-E] init() appelle render() UNE SEULE FOIS après chargement
-//  [FIX-F] Pas de double appel bindEvents()
-//  [FIX-G] ownerKeyHash SHA-256 de votre clé réelle (voir bas du fichier)
-// ============================================
 
 // ── [C4] Typer encapsulé ─────────────────────
 const typerState = {
@@ -481,14 +466,14 @@ function initCVButton() {
     btn.addEventListener("click", function (e) {
         e.preventDefault();
         if (this.dataset.state === "download") {
-            const link = Object.assign(document.createElement("a"), { href: "CV.pdf", download: "CV_Fanaja_Misaina.pdf" });
+            const link = Object.assign(document.createElement("a"), { href: "Fandresena_CV.pdf", download: "Fandresena_CV.pdf" });
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
             showNotification("✅ CV téléchargé !", "success");
         } else {
             const eye = this.querySelector(".eye-icon");
             if (eye) eye.style.animation = "eyeBlink 0.6s";
             setTimeout(() => {
-                window.open("CV.pdf", "CVPreview", "width=900,height=700");
+                window.open("Fandresena_CV.pdf", "CVPreview", "width=900,height=700");
                 this.innerHTML = '<i class="fas fa-download"></i> Télécharger CV';
                 this.dataset.state = "download";
             }, 400);
