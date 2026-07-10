@@ -1,4 +1,3 @@
-
 // ── [C4] Typer encapsulé ─────────────────────
 const typerState = {
     texts: [
@@ -16,37 +15,10 @@ const typerState = {
 const appState = {
     isInitialized: false,
     observers:     [],
-    timeouts:      {},
-    fileManager:   null
+    timeouts:      {}
 };
 
 // ── UTILITAIRES ───────────────────────────────
-
-/** Échappe les caractères HTML (XSS fix) */
-function escapeHtml(str) {
-    if (typeof str !== 'string') return '';
-    return str
-        .replace(/&/g,  '&amp;')
-        .replace(/</g,  '&lt;')
-        .replace(/>/g,  '&gt;')
-        .replace(/"/g,  '&quot;')
-        .replace(/'/g,  '&#039;');
-}
-
-/** Hash SHA-256 d'une chaîne */
-async function sha256(message) {
-    const msgBuffer  = new TextEncoder().encode(message);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-    return Array.from(new Uint8Array(hashBuffer))
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('');
-}
-
-/** Hash SHA-256 du contenu base64 d'un fichier */
-async function hashFileContent(dataUrl) {
-    const data = dataUrl ? dataUrl.split(',')[1] || dataUrl : '';
-    return sha256(data);
-}
 
 /** Throttle avec trailing call */
 const throttle = (func, limit) => {
@@ -74,9 +46,6 @@ document.addEventListener("DOMContentLoaded", function () {
     initAllFeatures();
     initThemeToggle();
     window.addEventListener('beforeunload', cleanupApp);
-    // [FIX-B] On attend 500ms pour que le DOM soit prêt,
-    // puis on initialise le FileManager UNE SEULE FOIS.
-    setTimeout(() => initFileManager(), 500);
 });
 
 // ── [C5] initAllFeatures ──────────────────────
@@ -96,7 +65,6 @@ function initAllFeatures() {
         initEcoleAnimations,
         initQualitesAnimations,
         initNavbarScrollEffect,
-        initPassionsAnimations,
         initAge
     ];
     features.forEach(fn => {
@@ -123,6 +91,7 @@ function initMatrixEffect() {
     let W, H, dots, particles = [];
     const DOTS = 200, CONNECT_DIST = 150, MOUSE_DIST = 220, REPULSE_DIST = 110;
     let mouse = { x: -999, y: -999 };
+    let rafId = null;
 
     function init() {
         W = canvas.width  = window.innerWidth;
@@ -139,7 +108,7 @@ function initMatrixEffect() {
     }
     init();
 
-    window.addEventListener('resize', init);
+    window.addEventListener('resize', throttle(init, 200));
     window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
     window.addEventListener('click', e => { mouse.x = e.clientX; mouse.y = e.clientY; explode(); });
 
@@ -229,11 +198,12 @@ function initMatrixEffect() {
             ctx.beginPath(); ctx.arc(mouse.x, mouse.y, 14, 0, Math.PI * 2);
             ctx.strokeStyle = 'rgba(0,212,255,0.5)'; ctx.lineWidth = 1; ctx.stroke();
         }
-        requestAnimationFrame(draw);
+        rafId = requestAnimationFrame(draw);
     }
     draw();
-}
 
+    appState.timeouts.matrixRaf = () => cancelAnimationFrame(rafId);
+}
 
 // ── NAVIGATION MOBILE ─────────────────────────
 function initNavigation() {
@@ -298,15 +268,14 @@ function initScrollAnimations() {
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
+                entry.target.classList.add("animate");
                 entry.target.style.opacity   = "1";
                 entry.target.style.transform = "translateY(0)";
+                observer.unobserve(entry.target);
             }
         });
     }, { threshold: 0.1 });
-    document.querySelectorAll("[data-aos]").forEach(el => {
-        el.style.opacity = "0"; el.style.transform = "translateY(30px)"; el.style.transition = "0.6s ease";
-        observer.observe(el);
-    });
+    document.querySelectorAll("[data-aos]").forEach(el => observer.observe(el));
     appState.observers.push(observer);
 }
 
@@ -339,7 +308,7 @@ function initNavbarScrollEffect() {
     ));
 }
 
-// ── [C6] COMPTEURS UNIFIÉS ────────────────────
+// ── COMPTEURS UNIFIÉS ────────────────────────
 function animateCounter(el, steps = 100, interval = 20) {
     const target    = parseInt(el.getAttribute('data-target'), 10);
     let current     = 0;
@@ -395,20 +364,6 @@ function initQualitesAnimations() {
     appState.observers.push(observer);
 }
 
-function initPassionsAnimations() {
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.querySelectorAll('.passion-card').forEach((card, i) => {
-                    setTimeout(() => card.style.opacity = '1', i * 100);
-                });
-            }
-        });
-    });
-    document.querySelectorAll('.passions-grid').forEach(grid => observer.observe(grid));
-    appState.observers.push(observer);
-}
-
 // ── SKILL BARS ───────────────────────────────
 function initSkillBars() {
     const observer = new IntersectionObserver((entries) => {
@@ -458,26 +413,21 @@ function initContactForm() {
     });
 }
 
-// ── BOUTON CV ────────────────────────────────
+// ── BOUTONS CV (Aperçu + Télécharger, deux liens natifs) ──
 function initCVButton() {
-    const btn = document.getElementById("voirCV");
-    if (!btn) return;
-    btn.dataset.state = "preview";
-    btn.addEventListener("click", function (e) {
-        e.preventDefault();
-        if (this.dataset.state === "download") {
-            const link = Object.assign(document.createElement("a"), { href: "Fandresena_cv.pdf", download: "CV_Fanaja_Misaina.pdf" });
-            document.body.appendChild(link); link.click(); document.body.removeChild(link);
-            showNotification("✅ CV téléchargé !", "success");
-        } else {
-            const eye = this.querySelector(".eye-icon");
-            if (eye) eye.style.animation = "eyeBlink 0.6s";
-            setTimeout(() => {
-                window.open("Fandresena_cv.pdf", "CVPreview", "width=900,height=700");
-                this.innerHTML = '<i class="fas fa-download"></i> Télécharger CV';
-                this.dataset.state = "download";
-            }, 400);
-        }
+    const previewBtn = document.getElementById("voirCV");
+    if (!previewBtn) return;
+
+    // Petite animation "clin d'oeil" au clic sur l'aperçu, purement décorative
+    previewBtn.addEventListener("click", function () {
+        const eye = this.querySelector(".eye-icon");
+        if (eye) eye.style.animation = "eyeBlink 0.6s";
+    });
+
+    // Le lien de téléchargement (2e bouton, sans id) déclenche juste une notif
+    const downloadBtn = document.querySelector('.cv-btn[download]');
+    downloadBtn?.addEventListener("click", () => {
+        showNotification("✅ CV en cours de téléchargement !", "success");
     });
 }
 
@@ -485,29 +435,11 @@ function initCVButton() {
 function showNotification(message, type = "success") {
     const toast = document.createElement("div");
     toast.className = `toast toast-${type}`;
-    toast.textContent = message; // textContent = pas d'injection XSS
-
-    Object.assign(toast.style, {
-        position: "fixed", top: "30px", right: "30px",
-        padding: "16px 24px", borderRadius: "12px",
-        color: "white", fontWeight: "600", zIndex: "10000",
-        backdropFilter: "blur(15px)",
-        transform: "translateX(400px)",
-        transition: "all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)"
-    });
-
-    const colors = {
-        success: "linear-gradient(135deg, #00ff88, #00cc66)",
-        error:   "linear-gradient(135deg, #ff6b6b, #ee5a52)",
-        warning: "linear-gradient(135deg, #fdcb6e, #e17055)",
-        info:    "linear-gradient(135deg, #00d4ff, #0099cc)"
-    };
-    toast.style.background = colors[type] || colors.success;
-
+    toast.textContent = message;
     document.body.appendChild(toast);
-    requestAnimationFrame(() => toast.style.transform = "translateX(0)");
+    requestAnimationFrame(() => toast.classList.add("show"));
     setTimeout(() => {
-        toast.style.transform = "translateX(400px)";
+        toast.classList.remove("show");
         setTimeout(() => toast.remove(), 400);
     }, 4000);
 }
@@ -539,13 +471,8 @@ function initAge() {
 // ── NETTOYAGE ─────────────────────────────────
 function cleanupApp() {
     if (typerState.timeout) clearTimeout(typerState.timeout);
-    Object.values(appState.timeouts).forEach(id => { clearTimeout(id); clearInterval(id); });
+    if (appState.timeouts?.matrixRaf) appState.timeouts.matrixRaf();
     appState.observers.forEach(obs => obs.disconnect());
 }
 
-// ── AIDE : GÉNÉRER VOTRE HASH ────────────────
-// Dans la console du navigateur, exécutez UNE FOIS :
-//   sha256('votre_mot_de_passe').then(h => console.log('ownerKeyHash =', h));
-// Puis collez le résultat dans this.ownerKeyHash ci-dessus.
-
-console.log("🚀 Portfolio CYBERSÉCURITÉ L1 — version débogée v2 !");
+console.log("🚀 Portfolio CYBERSÉCURITÉ L1 — version optimisée");
