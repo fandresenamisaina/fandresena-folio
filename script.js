@@ -1,9 +1,9 @@
 // ── [C4] Typer encapsulé ─────────────────────
 const typerState = {
     texts: [
-        "Étudiant en Informatique Licence 1",
+        "Étudiant en Informatique Licence 2",
         "Passionné de Cybersécurité",
-        "INSI - 2025-2026"
+        "INSI - 2026-2027"
     ],
     textIndex:  0,
     charIndex:  0,
