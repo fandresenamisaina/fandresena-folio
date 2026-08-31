@@ -9,44 +9,84 @@
     <meta name="description" content="Portfolio de RAKOTOARIVELO Fanaja Misaina Fandresena, étudiant en Licence Informatique à l'INSI Madagascar, passionné de cybersécurité, réseaux et administration système.">
     <meta name="keywords" content="Fandresena, cybersécurité, portfolio, étudiant informatique, INSI Madagascar, réseaux, Linux">
     <meta name="author" content="RAKOTOARIVELO Fanaja Misaina Fandresena">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://fandresenamisaina.github.io/">
 
     <!-- Open Graph (partage réseaux sociaux) -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="Fandresena RAKOTOARIVELO — Portfolio Cybersécurité">
     <meta property="og:description" content="Étudiant en Licence Informatique, passionné de cybersécurité et d'administration système.">
     <meta property="og:image" content="profil.jpg">
+    <meta property="og:url" content="https://fandresenamisaina.github.io/">
     <meta property="og:locale" content="fr_FR">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Fandresena RAKOTOARIVELO — Portfolio Cybersécurité">
+    <meta name="twitter:description" content="Étudiant en Licence Informatique, passionné de cybersécurité et d'administration système.">
+    <meta name="twitter:image" content="profil.jpg">
+
+    <!-- Theme color (barre d'adresse mobile) -->
+    <meta name="theme-color" content="#0d0d0d">
 
     <!-- Favicon (remplace favicon.png par ton propre fichier, ou supprime cette ligne) -->
     <link rel="icon" type="image/png" href="favicon.png">
 
+    <!-- Préconnexions pour accélérer le chargement des ressources externes -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" href="profil.jpg" as="image">
+
     <link rel="stylesheet" href="style.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+
+    <!-- Données structurées (SEO — fiche "Personne") -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "RAKOTOARIVELO Fanaja Misaina Fandresena",
+      "url": "https://fandresenamisaina.github.io/",
+      "image": "profil.jpg",
+      "jobTitle": "Étudiant en Licence Informatique",
+      "affiliation": {
+        "@type": "CollegeOrUniversity",
+        "name": "INSI - Institut National Supérieur d'Informatique"
+      },
+      "nationality": "Malagasy",
+      "email": "mailto:fandresenamisaina@gmail.com",
+      "sameAs": ["https://github.com/fandresenamisaina"]
+    }
+    </script>
 </head>
 <body>
 
+<!-- Skip link pour l'accessibilité clavier -->
+<a href="#home" class="skip-link">Aller au contenu principal</a>
+
 <!-- Navigation -->
-<nav class="navbar">
+<nav class="navbar" aria-label="Navigation principale">
     <div class="nav-container">
         <div class="nav-logo">
-            <i class="fas fa-shield-alt"></i> Fandresena-FOLIO
+            <i class="fas fa-shield-alt" aria-hidden="true"></i> Fandresena-FOLIO
         </div>
-        <ul class="nav-menu">
+        <ul class="nav-menu" id="nav-menu">
             <li class="nav-item"><a href="#home" class="nav-link">Accueil</a></li>
             <li class="nav-item"><a href="#about" class="nav-link">À propos</a></li>
-            <li class="nav-item"><a href="#objectif" class="nav-link"><i class="fas fa-bullseye"></i> Objectif</a></li>
+            <li class="nav-item"><a href="#objectif" class="nav-link"><i class="fas fa-bullseye" aria-hidden="true"></i> Objectif</a></li>
             <li class="nav-item"><a href="#skills" class="nav-link">Compétences</a></li>
             <li class="nav-item"><a href="#projects" class="nav-link">Projets</a></li>
             <li class="nav-item"><a href="#education" class="nav-link">Parcours</a></li>
             <li class="nav-item"><a href="#passions" class="nav-link">Passions</a></li>
             <li class="nav-item"><a href="#contact" class="nav-link">Contact</a></li>
         </ul>
-        <div class="hamburger">
+        <button class="hamburger" type="button" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="nav-menu">
             <span class="bar"></span>
             <span class="bar"></span>
             <span class="bar"></span>
-        </div>
+        </button>
     </div>
 </nav>
 
@@ -55,27 +95,27 @@
     <div class="hero-container">
         <div class="hero-content">
             <div class="avatar">
-                <img src="profil.jpg" alt="RAKOTOARIVELO Fanaja Misaina Fandresena, étudiant en cybersécurité" width="400" height="400" loading="eager">
+                <img src="profil.jpg" alt="RAKOTOARIVELO Fanaja Misaina Fandresena, étudiant en cybersécurité" width="400" height="400" loading="eager" fetchpriority="high">
             </div>
             <h1 class="hero-title">RAKOTOARIVELO Fanaja Misaina Fandresena</h1>
             <div class="typing-text">
                 <span class="typed-text"></span>
-                <span class="cursor">|</span>
+                <span class="cursor" aria-hidden="true">|</span>
             </div>
             <div class="hero-buttons">
                 <a href="#projects" class="btn btn-primary">Voir mes projets</a>
                 <a href="Fandresena_cv.pdf" id="voirCV" class="btn btn-secondary cv-btn" target="_blank" rel="noopener noreferrer">
-                    <i class="fas fa-eye eye-icon"></i>
+                    <i class="fas fa-eye eye-icon" aria-hidden="true"></i>
                     <span class="btn-text">Aperçu CV</span>
                 </a>
                 <a href="Fandresena_cv.pdf" class="btn btn-secondary cv-btn" download="CV_Fanaja_Misaina.pdf">
-                    <i class="fas fa-download"></i>
+                    <i class="fas fa-download" aria-hidden="true"></i>
                     <span class="btn-text">Télécharger CV</span>
                 </a>
             </div>
         </div>
     </div>
-    <div class="matrix-bg"></div>
+    <div class="matrix-bg" aria-hidden="true"></div>
 </section>
 
 <!-- Section À propos -->
@@ -99,35 +139,38 @@
         <div class="profil-card">
             <div class="profil-grid">
                 <div class="profil-item" data-aos="fade-up">
-                    <div class="profil-icon"><i class="fas fa-user"></i></div>
+                    <div class="profil-icon"><i class="fas fa-user" aria-hidden="true"></i></div>
                     <div class="profil-info">
                         <span class="profil-label">Nom complet</span>
                         <span class="profil-value">RAKOTOARIVELO Fanaja Misaina Fandresena</span>
                     </div>
                 </div>
                 <div class="profil-item" data-aos="fade-up" data-aos-delay="100">
-                    <div class="profil-icon"><i class="fas fa-birthday-cake"></i></div>
+                    <div class="profil-icon"><i class="fas fa-birthday-cake" aria-hidden="true"></i></div>
                     <div class="profil-info">
                         <span class="profil-label">Date de naissance</span>
-                        <span class="profil-value">31 Octobre 2008 <span class="profil-age" id="age-display"></span></span>
+                        <span class="profil-value">
+                            <time datetime="2008-10-31">31 Octobre 2008</time>
+                            <span class="profil-age" id="age-display"></span>
+                        </span>
                     </div>
                 </div>
                 <div class="profil-item" data-aos="fade-up" data-aos-delay="200">
-                    <div class="profil-icon"><i class="fas fa-map-marker-alt"></i></div>
+                    <div class="profil-icon"><i class="fas fa-map-marker-alt" aria-hidden="true"></i></div>
                     <div class="profil-info">
                         <span class="profil-label">Adresse</span>
                         <span class="profil-value">Itaosy, IPB 02 Bis — Madagascar</span>
                     </div>
                 </div>
                 <div class="profil-item" data-aos="fade-up" data-aos-delay="300">
-                    <div class="profil-icon"><i class="fas fa-flag"></i></div>
+                    <div class="profil-icon"><i class="fas fa-flag" aria-hidden="true"></i></div>
                     <div class="profil-info">
                         <span class="profil-label">Nationalité</span>
                         <span class="profil-value">🇲🇬 Malgache</span>
                     </div>
                 </div>
                 <div class="profil-item" data-aos="fade-up" data-aos-delay="400">
-                    <div class="profil-icon"><i class="fas fa-language"></i></div>
+                    <div class="profil-icon"><i class="fas fa-language" aria-hidden="true"></i></div>
                     <div class="profil-info">
                         <span class="profil-label">Langues</span>
                         <div class="profil-langs">
@@ -137,7 +180,7 @@
                     </div>
                 </div>
                 <div class="profil-item" data-aos="fade-up" data-aos-delay="500">
-                    <div class="profil-icon"><i class="fas fa-graduation-cap"></i></div>
+                    <div class="profil-icon"><i class="fas fa-graduation-cap" aria-hidden="true"></i></div>
                     <div class="profil-info">
                         <span class="profil-label">Situation</span>
                         <span class="profil-value">Étudiant universitaire — Licence Informatique <span class="badge-encours">EN COURS</span></span>
@@ -152,12 +195,12 @@
 <section id="objectif" class="objectif">
     <div class="container">
         <h2 class="section-title">
-            <i class="fas fa-bullseye"></i> Objectif Professionnel
+            <i class="fas fa-bullseye" aria-hidden="true"></i> Objectif Professionnel
         </h2>
         <div class="objectif-content">
             <div class="objectif-card">
                 <div class="objectif-icon">
-                    <i class="fas fa-rocket"></i>
+                    <i class="fas fa-rocket" aria-hidden="true"></i>
                 </div>
                 <div class="objectif-text">
                     <p class="objectif-main">
@@ -166,15 +209,15 @@
                     </p>
                     <div class="objectif-goals">
                         <div class="goal-item">
-                            <i class="fas fa-shield-alt"></i>
+                            <i class="fas fa-shield-alt" aria-hidden="true"></i>
                             <span>Obtenir certifications (CEH, CompTIA Security+)</span>
                         </div>
                         <div class="goal-item">
-                            <i class="fas fa-server"></i>
+                            <i class="fas fa-server" aria-hidden="true"></i>
                             <span>Maîtriser DevSecOps & Cloud Security</span>
                         </div>
                         <div class="goal-item">
-                            <i class="fas fa-code"></i>
+                            <i class="fas fa-code" aria-hidden="true"></i>
                             <span>Développer applications full-stack sécurisées</span>
                         </div>
                     </div>
@@ -184,7 +227,7 @@
     </div>
 </section>
 
-<!-- ✅ FIX : Section PASSIONS & QUALITÉS — doublon supprimé, balises correctement fermées -->
+<!-- Section PASSIONS & QUALITÉS -->
 <section id="passions" class="passions">
     <div class="container">
         <h2 class="section-title">Mes Passions & Qualités</h2>
@@ -193,22 +236,22 @@
             <!-- Passions -->
             <div class="passions-grid">
                 <div class="passion-card" data-aos="fade-up">
-                    <div class="passion-icon"><i class="fas fa-shield-alt"></i></div>
+                    <div class="passion-icon"><i class="fas fa-shield-alt" aria-hidden="true"></i></div>
                     <h3>🛡️ Cybersécurité</h3>
                     <p>Passionné par la sécurité informatique, les vulnérabilités, la cryptographie et la protection des données sensibles.</p>
                 </div>
                 <div class="passion-card" data-aos="fade-up" data-aos-delay="100">
-                    <div class="passion-icon"><i class="fas fa-network-wired"></i></div>
+                    <div class="passion-icon"><i class="fas fa-network-wired" aria-hidden="true"></i></div>
                     <h3>🌐 Réseau et Système</h3>
                     <p>Administration des réseaux, configuration des serveurs et gestion des systèmes informatiques pour une infrastructure robuste.</p>
                 </div>
                 <div class="passion-card" data-aos="fade-up" data-aos-delay="200">
-                    <div class="passion-icon"><i class="fas fa-cube"></i></div>
+                    <div class="passion-icon"><i class="fas fa-cube" aria-hidden="true"></i></div>
                     <h3>📦 Virtualisation</h3>
                     <p>Passionné par les technologies de virtualisation, les conteneurs et la création d'environnements isolés et sécurisés.</p>
                 </div>
                 <div class="passion-card" data-aos="fade-up" data-aos-delay="300">
-                    <div class="passion-icon"><i class="fab fa-linux"></i></div>
+                    <div class="passion-icon"><i class="fab fa-linux" aria-hidden="true"></i></div>
                     <h3>🐧 Linux Open Source</h3>
                     <p>Amoureux de Linux et de l'open source, j'explore les distributions libres pour créer des solutions durables et transparentes.</p>
                 </div>
@@ -217,49 +260,48 @@
             <!-- Qualités -->
             <div class="qualites-grid">
                 <div class="qualite-item">
-                    <i class="fas fa-bolt"></i>
+                    <i class="fas fa-bolt" aria-hidden="true"></i>
                     <span>Curieux</span>
-                    <div class="qualite-bar">
+                    <div class="qualite-bar" role="progressbar" aria-valuenow="95" aria-valuemin="0" aria-valuemax="100" aria-label="Curieux : 95%">
                         <div class="qualite-progress" data-width="95%"></div>
                     </div>
                 </div>
                 <div class="qualite-item">
-                    <i class="fas fa-brain"></i>
+                    <i class="fas fa-brain" aria-hidden="true"></i>
                     <span>Analytique</span>
-                    <div class="qualite-bar">
+                    <div class="qualite-bar" role="progressbar" aria-valuenow="90" aria-valuemin="0" aria-valuemax="100" aria-label="Analytique : 90%">
                         <div class="qualite-progress" data-width="90%"></div>
                     </div>
                 </div>
                 <div class="qualite-item">
-                    <i class="fas fa-users"></i>
+                    <i class="fas fa-users" aria-hidden="true"></i>
                     <span>Travail d'équipe</span>
-                    <div class="qualite-bar">
+                    <div class="qualite-bar" role="progressbar" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100" aria-label="Travail d'équipe : 85%">
                         <div class="qualite-progress" data-width="85%"></div>
                     </div>
                 </div>
                 <div class="qualite-item">
-                    <i class="fas fa-clock"></i>
+                    <i class="fas fa-clock" aria-hidden="true"></i>
                     <span>Discipliné</span>
-                    <div class="qualite-bar">
+                    <div class="qualite-bar" role="progressbar" aria-valuenow="92" aria-valuemin="0" aria-valuemax="100" aria-label="Discipliné : 92%">
                         <div class="qualite-progress" data-width="92%"></div>
                     </div>
                 </div>
                 <div class="qualite-item">
-                    <i class="fas fa-handshake"></i>
+                    <i class="fas fa-handshake" aria-hidden="true"></i>
                     <span>Social</span>
-                    <div class="qualite-bar">
+                    <div class="qualite-bar" role="progressbar" aria-valuenow="88" aria-valuemin="0" aria-valuemax="100" aria-label="Social : 88%">
                         <div class="qualite-progress" data-width="88%"></div>
                     </div>
                 </div>
                 <div class="qualite-item">
-                    <i class="fas fa-fire"></i>
+                    <i class="fas fa-fire" aria-hidden="true"></i>
                     <span>Déterminé</span>
-                    <div class="qualite-bar">
+                    <div class="qualite-bar" role="progressbar" aria-valuenow="97" aria-valuemin="0" aria-valuemax="100" aria-label="Déterminé : 97%">
                         <div class="qualite-progress" data-width="97%"></div>
                     </div>
                 </div>
             </div>
-            <!-- ✅ FIX : fermeture de passions-content -->
         </div>
     </div>
 </section>
@@ -273,7 +315,7 @@
                 <div class="ecole-card" data-aos="fade-up">
                     <div class="ecole-header">
                         <div class="ecole-logo">
-                            <i class="fas fa-university"></i>
+                            <i class="fas fa-university" aria-hidden="true"></i>
                         </div>
                         <h3>INSI - Institut National Supérieur d'Informatique</h3>
                     </div>
@@ -290,14 +332,14 @@
                     <div class="ecole-description">
                         <p><strong>Licence Professionnelle Informatique</strong> - Spécialisation Cybersécurité & Réseaux</p>
                         <ul class="ecole-features">
-                            <li><i class="fas fa-shield-alt"></i> Formation Cybersécurité</li>
-                            <li><i class="fas fa-network-wired"></i> Administration Réseaux</li>
-                            <li><i class="fas fa-database"></i> Merise & SQL</li>
-                            <li><i class="fas fa-code"></i> Programmation</li>
-                            <li><i class="fas fa-paint-brush"></i> Web Design</li>
-                            <li><i class="fas fa-project-diagram"></i> Gestion de projet</li>
-                            <li><i class="fas fa-server"></i> Administration Système</li>
-                            <li><i class="fas fa-robot"></i> Intelligence Artificielle</li>
+                            <li><i class="fas fa-shield-alt" aria-hidden="true"></i> Formation Cybersécurité</li>
+                            <li><i class="fas fa-network-wired" aria-hidden="true"></i> Administration Réseaux</li>
+                            <li><i class="fas fa-database" aria-hidden="true"></i> Merise & SQL</li>
+                            <li><i class="fas fa-code" aria-hidden="true"></i> Programmation</li>
+                            <li><i class="fas fa-paint-brush" aria-hidden="true"></i> Web Design</li>
+                            <li><i class="fas fa-project-diagram" aria-hidden="true"></i> Gestion de projet</li>
+                            <li><i class="fas fa-server" aria-hidden="true"></i> Administration Système</li>
+                            <li><i class="fas fa-robot" aria-hidden="true"></i> Intelligence Artificielle</li>
                         </ul>
                     </div>
                 </div>
@@ -312,39 +354,51 @@
         <h2 class="section-title">Compétences Techniques</h2>
         <div class="skills-grid">
             <div class="skill-card" data-aos="fade-up">
-                <i class="fab fa-js"></i>
+                <i class="fab fa-js" aria-hidden="true"></i>
                 <h3>JavaScript</h3>
-                <div class="skill-bar"><div class="skill-progress" data-width="60%"></div></div>
+                <div class="skill-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" aria-label="JavaScript : Intermédiaire">
+                    <div class="skill-progress" data-width="60%"></div>
+                </div>
                 <small class="skill-level">Intermédiaire</small>
             </div>
             <div class="skill-card" data-aos="fade-up" data-aos-delay="100">
-                <i class="fab fa-python"></i>
+                <i class="fab fa-python" aria-hidden="true"></i>
                 <h3>Python</h3>
-                <div class="skill-bar"><div class="skill-progress" data-width="55%"></div></div>
+                <div class="skill-bar" role="progressbar" aria-valuenow="55" aria-valuemin="0" aria-valuemax="100" aria-label="Python : En progression">
+                    <div class="skill-progress" data-width="55%"></div>
+                </div>
                 <small class="skill-level">En progression</small>
             </div>
             <div class="skill-card" data-aos="fade-up" data-aos-delay="200">
-                <i class="fab fa-cuttlefish"></i>
+                <i class="fab fa-cuttlefish" aria-hidden="true"></i>
                 <h3>C</h3>
-                <div class="skill-bar"><div class="skill-progress" data-width="45%"></div></div>
+                <div class="skill-bar" role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" aria-label="C : Débutant avancé">
+                    <div class="skill-progress" data-width="45%"></div>
+                </div>
                 <small class="skill-level">Débutant avancé</small>
             </div>
             <div class="skill-card" data-aos="fade-up" data-aos-delay="300">
-                <i class="fab fa-linux"></i>
+                <i class="fab fa-linux" aria-hidden="true"></i>
                 <h3>Linux</h3>
-                <div class="skill-bar"><div class="skill-progress" data-width="50%"></div></div>
+                <div class="skill-bar" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" aria-label="Linux : Bases solides">
+                    <div class="skill-progress" data-width="50%"></div>
+                </div>
                 <small class="skill-level">Bases solides</small>
             </div>
             <div class="skill-card" data-aos="fade-up" data-aos-delay="400">
-                <i class="fas fa-network-wired"></i>
+                <i class="fas fa-network-wired" aria-hidden="true"></i>
                 <h3>Réseaux</h3>
-                <div class="skill-bar"><div class="skill-progress" data-width="40%"></div></div>
+                <div class="skill-bar" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" aria-label="Réseaux : Initiation">
+                    <div class="skill-progress" data-width="40%"></div>
+                </div>
                 <small class="skill-level">Initiation</small>
             </div>
             <div class="skill-card" data-aos="fade-up" data-aos-delay="500">
-                <i class="fab fa-figma"></i>
+                <i class="fab fa-figma" aria-hidden="true"></i>
                 <h3>Design</h3>
-                <div class="skill-bar"><div class="skill-progress" data-width="45%"></div></div>
+                <div class="skill-bar" role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" aria-label="Design : Figma / Photoshop">
+                    <div class="skill-progress" data-width="45%"></div>
+                </div>
                 <small class="skill-level">Figma / Photoshop</small>
             </div>
         </div>
@@ -352,42 +406,41 @@
 </section>
 
 <!-- Section Projets -->
-<!-- Section Projets -->
 <section id="projects" class="projects">
     <div class="container">
         <h2 class="section-title">Projets académiques</h2>
         <div class="projects-grid">
             <div class="project-card" data-aos="zoom-in" data-aos-delay="100">
                 <div class="project-icon">
-                    <i class="fab fa-html5"></i>
+                    <i class="fab fa-html5" aria-hidden="true"></i>
                 </div>
                 <h3>Site Web HTML/CSS</h3>
                 <p>Projet pour comprendre l'utilisation de JavaScript</p>
                 <div class="project-links">
-                    <a href="https://github.com/fandresenamisaina/projetjavascript.git" class="project-link" target="_blank"><i class="fab fa-github"></i></a>
-                    <a href="https://fandresenamisaina.github.io/projetjavascript/" class="project-link" target="_blank"><i class="fas fa-eye"></i></a>
+                    <a href="https://github.com/fandresenamisaina/projetjavascript.git" class="project-link" target="_blank" rel="noopener noreferrer" aria-label="Voir le code sur GitHub"><i class="fab fa-github" aria-hidden="true"></i></a>
+                    <a href="https://fandresenamisaina.github.io/projetjavascript/" class="project-link" target="_blank" rel="noopener noreferrer" aria-label="Voir la démo du projet"><i class="fas fa-eye" aria-hidden="true"></i></a>
                 </div>
                 <p class="project-hint">Cliquez sur l'icône GitHub pour voir le code et sur l'icône œil pour voir le projet</p>
             </div>
             <div class="project-card" data-aos="zoom-in" data-aos-delay="200">
                 <div class="project-icon">
-                    <i class="fas fa-users-cog"></i>
+                    <i class="fas fa-users-cog" aria-hidden="true"></i>
                 </div>
                 <h3>Gestion des Employés</h3>
                 <p>Application de gestion des employés en Java</p>
                 <div class="project-links">
-                    <a href="https://github.com/fandresenamisaina/GestionEployer.git" class="project-link" target="_blank"><i class="fab fa-github"></i></a>
+                    <a href="https://github.com/fandresenamisaina/GestionEployer.git" class="project-link" target="_blank" rel="noopener noreferrer" aria-label="Voir le code sur GitHub"><i class="fab fa-github" aria-hidden="true"></i></a>
                 </div>
                 <p class="project-hint">Cliquez sur l'icône GitHub pour voir le code</p>
             </div>
             <div class="project-card" data-aos="zoom-in" data-aos-delay="300">
                 <div class="project-icon">
-                    <i class="fab fa-symfony"></i>
+                    <i class="fab fa-symfony" aria-hidden="true"></i>
                 </div>
                 <h3>Offres d'Employé (Symfony)</h3>
                 <p>Application Symfony pour la gestion des offres d'emploi</p>
                 <div class="project-links">
-                    <a href="https://github.com/fandresenamisaina/symfony_offres_employe.git" class="project-link" target="_blank"><i class="fab fa-github"></i></a>
+                    <a href="https://github.com/fandresenamisaina/symfony_offres_employe.git" class="project-link" target="_blank" rel="noopener noreferrer" aria-label="Voir le code sur GitHub"><i class="fab fa-github" aria-hidden="true"></i></a>
                 </div>
                 <p class="project-hint">Cliquez sur l'icône GitHub pour voir le code</p>
             </div>
@@ -402,7 +455,7 @@
         <div class="timeline">
             <div class="timeline-item" data-aos="fade-right">
                 <div class="timeline-icon">
-                    <i class="fas fa-graduation-cap"></i>
+                    <i class="fas fa-graduation-cap" aria-hidden="true"></i>
                 </div>
                 <div class="timeline-content">
                     <h3>Baccalauréat Série A2</h3>
@@ -412,9 +465,9 @@
             </div>
             <div class="timeline-item" data-aos="fade-left">
                 <div class="timeline-icon en-cours">
-                    <i class="fas fa-university"></i>
+                    <i class="fas fa-university" aria-hidden="true"></i>
                     <div class="timeline-badge">
-                        <i class="fas fa-play"></i>
+                        <i class="fas fa-play" aria-hidden="true"></i>
                     </div>
                 </div>
                 <div class="timeline-content">
@@ -434,33 +487,39 @@
         <div class="contact-content" data-aos="fade-up" data-aos-delay="200">
 
             <!-- FORMULAIRE -->
-            <form class="contact-form">
-                <input type="text" name="from_name" placeholder="Votre nom" required>
-                <input type="email" name="from_email" placeholder="Votre email" required>
-                <textarea name="message" placeholder="Votre message" rows="5" required></textarea>
+            <form class="contact-form" id="contact-form">
+                <label for="from_name" class="sr-only">Votre nom</label>
+                <input type="text" id="from_name" name="from_name" placeholder="Votre nom" autocomplete="name" required>
+
+                <label for="from_email" class="sr-only">Votre email</label>
+                <input type="email" id="from_email" name="from_email" placeholder="Votre email" autocomplete="email" required>
+
+                <label for="message" class="sr-only">Votre message</label>
+                <textarea id="message" name="message" placeholder="Votre message" rows="5" required></textarea>
+
                 <button type="submit">
-                    <i class="fas fa-paper-plane"></i> Envoyer le message
+                    <i class="fas fa-paper-plane" aria-hidden="true"></i> Envoyer le message
                 </button>
             </form>
 
             <!-- INFOS CONTACT -->
             <div class="contact-info">
                 <div class="contact-item" data-aos="fade-right" data-aos-delay="100">
-                    <i class="fab fa-github"></i>
+                    <i class="fab fa-github" aria-hidden="true"></i>
                     <div class="contact-item-content">
                         <h3>GitHub</h3>
-                        <p><a href="https://github.com/fandresenamisaina" target="_blank">github.com/fandresenamisaina</a></p>
+                        <p><a href="https://github.com/fandresenamisaina" target="_blank" rel="noopener noreferrer">github.com/fandresenamisaina</a></p>
                     </div>
                 </div>
                 <div class="contact-item" data-aos="fade-up" data-aos-delay="200">
-                    <i class="fas fa-envelope"></i>
+                    <i class="fas fa-envelope" aria-hidden="true"></i>
                     <div class="contact-item-content">
                         <h3>Email</h3>
                         <p><a href="mailto:fandresenamisaina@gmail.com">fandresenamisaina@gmail.com</a></p>
                     </div>
                 </div>
                 <div class="contact-item" data-aos="fade-left" data-aos-delay="300">
-                    <i class="fas fa-phone"></i>
+                    <i class="fas fa-phone" aria-hidden="true"></i>
                     <div class="contact-item-content">
                         <h3>Téléphone</h3>
                         <p><a href="tel:+261383734459">+261 38 37 344 59</a></p>
@@ -473,8 +532,8 @@
 </section>
 
 <!-- Bouton retour en haut -->
-<button class="scroll-top" id="scrollTop">
-    <i class="fas fa-chevron-up"></i>
+<button class="scroll-top" id="scrollTop" type="button" aria-label="Retour en haut de la page">
+    <i class="fas fa-chevron-up" aria-hidden="true"></i>
 </button>
 
 <!-- Footer -->
@@ -483,7 +542,7 @@
         <div class="footer-content">
             <div class="footer-logo-section">
                 <div class="footer-logo">
-                    <i class="fas fa-shield-alt"></i>
+                    <i class="fas fa-shield-alt" aria-hidden="true"></i>
                     <strong>RAKOTOARIVELO Fanaja Misaina Fandresena</strong>
                 </div>
                 <p>
@@ -491,22 +550,22 @@
                     <span class="passion-tag">Passionné Cybersécurité</span>
                 </p>
                 <div class="footer-tech">
-                    Fait avec <i class="fas fa-heart"></i> HTML/CSS/JS
+                    Fait avec <i class="fas fa-heart" aria-hidden="true"></i> HTML/CSS/JS
                 </div>
             </div>
             <div class="footer-contact">
                 <div class="social-icons">
-                    <a href="https://github.com/fandresenamisaina" target="_blank" title="GitHub"><i class="fab fa-github"></i></a>
-                    <a href="mailto:fandresenamisaina@gmail.com" title="Email"><i class="fas fa-envelope"></i></a>
-                    <a href="tel:+261383734459" title="Phone"><i class="fas fa-phone"></i></a>
+                    <a href="https://github.com/fandresenamisaina" target="_blank" rel="noopener noreferrer" title="GitHub" aria-label="GitHub"><i class="fab fa-github" aria-hidden="true"></i></a>
+                    <a href="mailto:fandresenamisaina@gmail.com" title="Email" aria-label="Email"><i class="fas fa-envelope" aria-hidden="true"></i></a>
+                    <a href="tel:+261383734459" title="Phone" aria-label="Téléphone"><i class="fas fa-phone" aria-hidden="true"></i></a>
                 </div>
             </div>
         </div>
     </div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<script src="script.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" defer></script>
+<script src="script.js" defer></script>
 
 </body>
 </html>

@@ -80,6 +80,7 @@ function initMatrixEffect() {
 
     const canvas = document.createElement('canvas');
     canvas.id = 'matrix-canvas';
+    canvas.setAttribute('aria-hidden', 'true');
     canvas.style.cssText = `
         position: fixed; top: 0; left: 0;
         width: 100vw; height: 100vh;
@@ -206,6 +207,8 @@ function initMatrixEffect() {
 }
 
 // ── NAVIGATION MOBILE ─────────────────────────
+// Adapté : le hamburger est maintenant un <button aria-expanded="false">,
+// on synchronise donc aria-expanded avec l'état ouvert/fermé du menu.
 function initNavigation() {
     const hamburger = document.querySelector(".hamburger");
     hamburger?.addEventListener("click", toggleMobileMenu);
@@ -215,13 +218,21 @@ function initNavigation() {
 }
 
 function toggleMobileMenu() {
-    document.querySelector(".hamburger").classList.toggle("active");
-    document.querySelector(".nav-menu").classList.toggle("active");
+    const hamburger = document.querySelector(".hamburger");
+    const navMenu   = document.getElementById("nav-menu") || document.querySelector(".nav-menu");
+    const isActive  = navMenu?.classList.toggle("active");
+    hamburger?.classList.toggle("active", isActive);
+    hamburger?.setAttribute("aria-expanded", isActive ? "true" : "false");
+    hamburger?.setAttribute("aria-label", isActive ? "Fermer le menu" : "Ouvrir le menu");
 }
 
 function closeMobileMenu() {
-    document.querySelector(".hamburger")?.classList.remove("active");
-    document.querySelector(".nav-menu")?.classList.remove("active");
+    const hamburger = document.querySelector(".hamburger");
+    const navMenu   = document.getElementById("nav-menu") || document.querySelector(".nav-menu");
+    hamburger?.classList.remove("active");
+    navMenu?.classList.remove("active");
+    hamburger?.setAttribute("aria-expanded", "false");
+    hamburger?.setAttribute("aria-label", "Ouvrir le menu");
 }
 
 // ── [C4] TYPER ───────────────────────────────
@@ -350,12 +361,17 @@ function initEcoleAnimations() {
     appState.observers.push(observer);
 }
 
+// Adapté : les barres de qualités portent maintenant role="progressbar" +
+// aria-valuenow ; on met aria-valuenow à jour en même temps que la largeur.
 function initQualitesAnimations() {
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 entry.target.querySelectorAll('.qualite-progress').forEach(bar => {
-                    bar.style.width = bar.getAttribute('data-width');
+                    const width = bar.getAttribute('data-width');
+                    bar.style.width = width;
+                    const barContainer = bar.closest('[role="progressbar"]');
+                    if (barContainer) barContainer.setAttribute('aria-valuenow', parseInt(width, 10) || 0);
                 });
             }
         });
@@ -365,12 +381,16 @@ function initQualitesAnimations() {
 }
 
 // ── SKILL BARS ───────────────────────────────
+// Adapté : idem pour les barres de compétences (role="progressbar").
 function initSkillBars() {
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 document.querySelectorAll(".skill-progress").forEach(bar => {
-                    bar.style.width = bar.getAttribute("data-width");
+                    const width = bar.getAttribute("data-width");
+                    bar.style.width = width;
+                    const barContainer = bar.closest('[role="progressbar"]');
+                    if (barContainer) barContainer.setAttribute('aria-valuenow', parseInt(width, 10) || 0);
                 });
                 observer.unobserve(entry.target);
             }
@@ -381,8 +401,10 @@ function initSkillBars() {
 }
 
 // ── FORMULAIRE CONTACT ────────────────────────
+// Adapté : sélection par id (#contact-form) avec repli sur la classe,
+// pour coller au nouvel attribut id="contact-form" du HTML.
 function initContactForm() {
-    const form = document.querySelector(".contact-form");
+    const form = document.getElementById("contact-form") || document.querySelector(".contact-form");
     if (!form || typeof emailjs === "undefined") { console.warn("EmailJS non chargé"); return; }
     emailjs.init("PCqGyE1CPI0Ao6DZO");
 
@@ -435,6 +457,8 @@ function initCVButton() {
 function showNotification(message, type = "success") {
     const toast = document.createElement("div");
     toast.className = `toast toast-${type}`;
+    toast.setAttribute("role", "status");
+    toast.setAttribute("aria-live", "polite");
     toast.textContent = message;
     document.body.appendChild(toast);
     requestAnimationFrame(() => toast.classList.add("show"));
